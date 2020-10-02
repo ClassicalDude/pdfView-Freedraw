@@ -94,6 +94,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 let dY = currentLocation.y - startLocation.y
                 self.totalDistance += sqrt(pow(dX, 2) + pow(dY, 2))
                 if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
+                    DispatchQueue.main.async {
+                        self.drawVeil.removeFromSuperview() // Remove the UIView for the CAShapeLayer
+                    }
                     return
                 }
                 
@@ -147,6 +150,11 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         
                         // Update the startLocation for touchesEnded below
                         self.startLocation = currentLocation
+                    }
+                } else {
+                    // Signing path was empty
+                    DispatchQueue.main.async {
+                        self.drawVeil.removeFromSuperview() // Remove the UIView for the CAShapeLayer
                     }
                 }
             }
@@ -217,6 +225,12 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         // Clear the drawVeil its UIBezierPath
                         self.drawVeil.removeFromSuperview()
                         self.viewPath.removeAllPoints()
+                    }
+                } else {
+                    // Signing path was empty
+                    self.viewPath.removeAllPoints()
+                    DispatchQueue.main.async {
+                        self.drawVeil.removeFromSuperview()
                     }
                 }
             }

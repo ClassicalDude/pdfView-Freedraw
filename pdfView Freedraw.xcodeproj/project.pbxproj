@@ -16,7 +16,6 @@
 		E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E435F05F2526F7AE00A3BEEE /* blank.pdf */; };
 		E435F0632526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */; };
 		E435F067252711E700A3BEEE /* UIBezierPath+.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F066252711E700A3BEEE /* UIBezierPath+.swift */; };
-		E435F06A252759E800A3BEEE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = E435F069252759E800A3BEEE /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,7 +30,6 @@
 		E435F05F2526F7AE00A3BEEE /* blank.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = blank.pdf; sourceTree = "<group>"; };
 		E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFFreedrawGestureRecognizer.swift; sourceTree = "<group>"; };
 		E435F066252711E700A3BEEE /* UIBezierPath+.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIBezierPath+.swift"; sourceTree = "<group>"; };
-		E435F069252759E800A3BEEE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,7 +72,6 @@
 				E435F0552526F73B00A3BEEE /* LaunchScreen.storyboard */,
 				E435F0582526F73B00A3BEEE /* Info.plist */,
 				E435F05F2526F7AE00A3BEEE /* blank.pdf */,
-				E435F069252759E800A3BEEE /* README.md */,
 			);
 			path = "pdfView Freedraw";
 			sourceTree = "<group>";
@@ -138,7 +135,6 @@
 			files = (
 				E435F0572526F73B00A3BEEE /* LaunchScreen.storyboard in Resources */,
 				E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */,
-				E435F06A252759E800A3BEEE /* README.md in Resources */,
 				E435F0542526F73B00A3BEEE /* Assets.xcassets in Resources */,
 				E435F0522526F73900A3BEEE /* Main.storyboard in Resources */,
 			);
