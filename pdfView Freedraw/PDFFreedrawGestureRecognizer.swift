@@ -94,9 +94,6 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 let dY = currentLocation.y - startLocation.y
                 self.totalDistance += sqrt(pow(dX, 2) + pow(dY, 2))
                 if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
-                    DispatchQueue.main.async {
-                        self.drawVeil.removeFromSuperview() // Remove the UIView for the CAShapeLayer
-                    }
                     return
                 }
                 
