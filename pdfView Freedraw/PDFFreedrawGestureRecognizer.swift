@@ -61,6 +61,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             
             // Attach the UIView that we will use to draw the annotation on a CALayer, until the touches end
             drawVeil = UIView(frame: pdfView!.frame)
+            drawVeil.tag = 35791 // For identifying and removing all instances later on
             drawVeil.isUserInteractionEnabled = false
             DispatchQueue.main.async {
                 self.pdfView?.superview?.addSubview(self.drawVeil)
@@ -151,7 +152,10 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 } else {
                     // Signing path was empty
                     DispatchQueue.main.async {
-                        self.drawVeil.removeFromSuperview() // Remove the UIView for the CAShapeLayer
+                        // Remove the UIView for the CAShapeLayer
+                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
+                            drawVeilSubview.removeFromSuperview()
+                        }
                     }
                 }
             }
@@ -196,7 +200,10 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                                 self.pdfView?.currentPage?.removeAnnotation(annotation)
                             }
                         }
-                        self.drawVeil.removeFromSuperview()
+                        // Remove the UIView for the CAShapeLayer
+                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
+                            drawVeilSubview.removeFromSuperview()
+                        }
                         self.viewPath.removeAllPoints()
 
                     } else {
@@ -220,14 +227,20 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation(annotation)
                         
                         // Clear the drawVeil its UIBezierPath
-                        self.drawVeil.removeFromSuperview()
+                        // Remove the UIView for the CAShapeLayer
+                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
+                            drawVeilSubview.removeFromSuperview()
+                        }
                         self.viewPath.removeAllPoints()
                     }
                 } else {
                     // Signing path was empty
                     self.viewPath.removeAllPoints()
                     DispatchQueue.main.async {
-                        self.drawVeil.removeFromSuperview()
+                        // Remove the UIView for the CAShapeLayer
+                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
+                            drawVeilSubview.removeFromSuperview()
+                        }
                     }
                 }
             }
