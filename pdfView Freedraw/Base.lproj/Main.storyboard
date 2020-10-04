@@ -17,7 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pDG-B4-pGO">
-                                <rect key="frame" x="30" y="832" width="63" height="30"/>
+                                <rect key="frame" x="30" y="802" width="63" height="30"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="30" id="4aQ-6h-V6B"/>
                                 </constraints>
@@ -29,7 +29,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1jx-fJ-Myz">
-                                <rect key="frame" x="160.5" y="832" width="93" height="30"/>
+                                <rect key="frame" x="160.5" y="802" width="93" height="30"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="30" id="yWp-es-jF9"/>
                                 </constraints>
@@ -41,7 +41,7 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NWQ-NA-db6">
-                                <rect key="frame" x="340" y="832" width="44" height="30"/>
+                                <rect key="frame" x="340" y="802" width="44" height="30"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="30" id="ioJ-E5-Wb3"/>
                                 </constraints>
@@ -52,16 +52,25 @@
                                     <action selector="eraserAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="N19-fc-6c2"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AYM-6u-Gis">
+                                <rect key="frame" x="168.5" y="832" width="77" height="30"/>
+                                <state key="normal" title="Undo/Redo"/>
+                                <connections>
+                                    <action selector="undoAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="2ro-tK-phC"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="pDG-B4-pGO" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="30" id="1kf-gQ-v47"/>
+                            <constraint firstItem="AYM-6u-Gis" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="ChI-Ol-xjx"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="AYM-6u-Gis" secondAttribute="bottom" id="Oef-kx-4Wm"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="NWQ-NA-db6" secondAttribute="trailing" constant="30" id="PNZ-JR-sc0"/>
-                            <constraint firstItem="NWQ-NA-db6" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="PrM-HR-hEk"/>
+                            <constraint firstItem="NWQ-NA-db6" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="PrM-HR-hEk"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="pDG-B4-pGO" secondAttribute="trailing" symbolic="YES" id="d46-DA-5rD"/>
-                            <constraint firstItem="pDG-B4-pGO" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="ndY-kK-C8m"/>
-                            <constraint firstItem="1jx-fJ-Myz" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="tWg-Q5-VrB"/>
+                            <constraint firstItem="pDG-B4-pGO" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="ndY-kK-C8m"/>
+                            <constraint firstItem="1jx-fJ-Myz" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="tWg-Q5-VrB"/>
                             <constraint firstItem="NWQ-NA-db6" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="1jx-fJ-Myz" secondAttribute="trailing" constant="8" symbolic="YES" id="tY4-Kg-AqU"/>
                             <constraint firstItem="1jx-fJ-Myz" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="yxh-Po-mxM"/>
                         </constraints>

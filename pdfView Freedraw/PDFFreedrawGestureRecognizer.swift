@@ -22,6 +22,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// The type of free draw annotation. Select between pen, highlighter and eraser
     public static var type : FreedrawType = .pen
     
+    /// Undo Manager for PDFFreedrawGestureRecognizer
+    public let undoManager = UndoManager()
+    
     private var drawVeil = UIView() // will be used for temporary CAShapeLayer
     private var startLocation : CGPoint?
     private var movedTest : CGPoint?
@@ -30,6 +33,12 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     private var viewPath = UIBezierPath()
     private var pdfView : PDFView?
     private var currentAnnotation : PDFAnnotation?
+    private var annotation : PDFAnnotation!
+    private enum UndoManagerAction {
+        case undo
+        case redo
+    }
+    private var undoManagerAction : UndoManagerAction = .undo
     
     convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
         PDFFreedrawGestureRecognizer.color = color ?? UIColor.red
@@ -122,6 +131,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         for annotation in annotations! {
                             if annotation.bounds.intersects(rect) {
                                 self.pdfView?.currentPage?.removeAnnotation(annotation)
+                                self.annotation = annotation // Make sure we register the right annotation
+                                self.undoManagerAction = .redo // Reset the undo/redo cycle
+                                self.registerUndoRedo()
                             }
                         }
                         
@@ -198,6 +210,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         for annotation in annotations! {
                             if annotation.bounds.intersects(rect) {
                                 self.pdfView?.currentPage?.removeAnnotation(annotation)
+                                self.annotation = annotation // Make sure we register the right annotation
+                                self.undoManagerAction = .redo // Reset the undo/redo cycle
+                                self.registerUndoRedo()
                             }
                         }
                         // Remove the UIView for the CAShapeLayer
@@ -209,22 +224,24 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     } else {
                         
                         // Create the annotation we will save
-                        let annotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
+                        self.annotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
                         let b = PDFBorder()
                         if PDFFreedrawGestureRecognizer.type != .eraser {
                             b.lineWidth = PDFFreedrawGestureRecognizer.width
                         } else {
                             b.lineWidth = 1
                         }
-                        annotation.border = b
+                        self.annotation.border = b
                         var alphaComponent : CGFloat = 1.0
                         if PDFFreedrawGestureRecognizer.type == .highlighter {
                             alphaComponent = 0.3
                         }
-                        annotation.color = PDFFreedrawGestureRecognizer.color.withAlphaComponent(alphaComponent)
+                        self.annotation.color = PDFFreedrawGestureRecognizer.color.withAlphaComponent(alphaComponent)
                         _ = self.signingPath.moveCenter(to: rect.center)
-                        annotation.add(self.signingPath)
-                        self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation(annotation)
+                        self.annotation.add(self.signingPath)
+                        self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation(self.annotation)
+                        self.undoManagerAction = .undo // Reset the undo/redo cycle
+                        self.registerUndoRedo()
                         
                         // Clear the drawVeil its UIBezierPath
                         // Remove the UIView for the CAShapeLayer
@@ -244,6 +261,21 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     }
                 }
             }
+        }
+    }
+    
+    /// Function that toggles the undo manager registration of the last annotation drawn between undo and redo
+    public func registerUndoRedo() {
+        if undoManagerAction == .redo {
+            undoManager.registerUndo(withTarget: self, handler: { (selfTarget) in
+                selfTarget.pdfView?.document?.page(at: (selfTarget.pdfView?.document?.index(for: (selfTarget.pdfView?.currentPage!)!))!)?.addAnnotation(self.annotation)
+            })
+            undoManagerAction = .undo
+        } else {
+            undoManager.registerUndo(withTarget: self, handler: { (selfTarget) in
+                selfTarget.pdfView?.document?.page(at: (selfTarget.pdfView?.document?.index(for: (selfTarget.pdfView?.currentPage!)!))!)?.removeAnnotation(self.annotation)
+            })
+            undoManagerAction = .redo
         }
     }
 }
