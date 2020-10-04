@@ -28,18 +28,6 @@
                                     <action selector="blueLineAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="hcZ-3R-EXi"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1jx-fJ-Myz">
-                                <rect key="frame" x="160.5" y="802" width="93" height="30"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="30" id="yWp-es-jF9"/>
-                                </constraints>
-                                <state key="normal" title="Red Highlight">
-                                    <color key="titleColor" systemColor="systemRedColor"/>
-                                </state>
-                                <connections>
-                                    <action selector="redHighlightAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="FeR-l9-ExA"/>
-                                </connections>
-                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NWQ-NA-db6">
                                 <rect key="frame" x="340" y="802" width="44" height="30"/>
                                 <constraints>
@@ -52,11 +40,30 @@
                                     <action selector="eraserAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="N19-fc-6c2"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1jx-fJ-Myz">
+                                <rect key="frame" x="160.5" y="802" width="93" height="30"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="30" id="yWp-es-jF9"/>
+                                </constraints>
+                                <state key="normal" title="Red Highlight">
+                                    <color key="titleColor" systemColor="systemRedColor"/>
+                                </state>
+                                <connections>
+                                    <action selector="redHighlightAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="FeR-l9-ExA"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AYM-6u-Gis">
-                                <rect key="frame" x="168.5" y="832" width="77" height="30"/>
-                                <state key="normal" title="Undo/Redo"/>
+                                <rect key="frame" x="85" y="832" width="37" height="30"/>
+                                <state key="normal" title="Undo"/>
                                 <connections>
                                     <action selector="undoAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="2ro-tK-phC"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Mwr-9q-Nzw">
+                                <rect key="frame" x="292.5" y="832" width="36" height="30"/>
+                                <state key="normal" title="Redo"/>
+                                <connections>
+                                    <action selector="redoAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="UE0-EO-8gW"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -64,17 +71,23 @@
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="pDG-B4-pGO" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="30" id="1kf-gQ-v47"/>
-                            <constraint firstItem="AYM-6u-Gis" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="ChI-Ol-xjx"/>
+                            <constraint firstItem="AYM-6u-Gis" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" multiplier="0.5" id="ChI-Ol-xjx"/>
+                            <constraint firstItem="Mwr-9q-Nzw" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" multiplier="1.5" id="HCU-tI-tu3"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="AYM-6u-Gis" secondAttribute="bottom" id="Oef-kx-4Wm"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="NWQ-NA-db6" secondAttribute="trailing" constant="30" id="PNZ-JR-sc0"/>
                             <constraint firstItem="NWQ-NA-db6" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="PrM-HR-hEk"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="pDG-B4-pGO" secondAttribute="trailing" symbolic="YES" id="d46-DA-5rD"/>
                             <constraint firstItem="pDG-B4-pGO" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="ndY-kK-C8m"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="Mwr-9q-Nzw" secondAttribute="bottom" id="t5t-z0-fWg"/>
                             <constraint firstItem="1jx-fJ-Myz" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="tWg-Q5-VrB"/>
                             <constraint firstItem="NWQ-NA-db6" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="1jx-fJ-Myz" secondAttribute="trailing" constant="8" symbolic="YES" id="tY4-Kg-AqU"/>
                             <constraint firstItem="1jx-fJ-Myz" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="yxh-Po-mxM"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="redoOutlet" destination="Mwr-9q-Nzw" id="YuZ-UA-17J"/>
+                        <outlet property="undoOutlet" destination="AYM-6u-Gis" id="DCb-m5-ege"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>

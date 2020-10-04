@@ -8,7 +8,10 @@
 import UIKit
 import PDFKit
 
-class ViewController: UIViewController, UIGestureRecognizerDelegate {
+class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedrawGestureRecognizerUndoDelegate {
+    
+    @IBOutlet weak var undoOutlet: UIButton!
+    @IBOutlet weak var redoOutlet: UIButton!
     
     var pdfFreedraw : PDFFreedrawGestureRecognizer!
     
@@ -31,6 +34,10 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate {
         // Define the gesture recognizer. You can use a default initializer for a narrow red pen
         pdfFreedraw = PDFFreedrawGestureRecognizer(color: UIColor.blue, width: 3, type: .pen)
         pdfFreedraw.delegate = self
+        pdfFreedraw.undoDelegate = self
+        
+        // Set the allowed number of undo actions
+        pdfFreedraw.maxUndoNumber = 5
         
         // Set the pdfView's isUserInteractionEnabled property to false, otherwise you'll end up swiping pages instead of drawing. This is also one of the conditions used by the PDFFreeDrawGestureRecognizer to execute, so you can use it to turn free drawing on and off.
         pdfView.isUserInteractionEnabled = false
@@ -41,6 +48,9 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate {
         /* IMPORTANT!
         You must make sure all other gesture recognizers have their cancelsTouchesInView option set to false, otherwise different stages of this gesture recognizer's touches may not be called, and the CAShapeLayer that holds the temporary annotation will not be removed.
          */
+        
+        // Set the initial state of the undo and redo buttons
+        freedrawUndoStateChanged()
     }
     
     // This function will make sure you can control gestures aimed at UIButtons
@@ -57,6 +67,19 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate {
             return true
         }
         return false
+    }
+    
+    func freedrawUndoStateChanged() {
+        if pdfFreedraw.canUndo {
+            undoOutlet.isEnabled = true
+        } else {
+            undoOutlet.isEnabled = false
+        }
+        if pdfFreedraw.canRedo {
+            redoOutlet.isEnabled = true
+        } else {
+            redoOutlet.isEnabled = false
+        }
     }
 
     @IBAction func blueLineAction(_ sender: UIButton) {
@@ -76,8 +99,11 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate {
     }
     
     @IBAction func undoAction(_ sender: UIButton) {
-        pdfFreedraw.undoManager.undo()
-        pdfFreedraw.registerUndoRedo()
-    }    
+        pdfFreedraw.undoAnnotation()
+    }
+    @IBAction func redoAction(_ sender: UIButton) {
+        pdfFreedraw.redoAnnotation()
+    }
+    
 }
 

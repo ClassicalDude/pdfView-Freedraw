@@ -8,6 +8,11 @@
 import UIKit
 import PDFKit
 
+/// A protocol that allows delegates of `PDFFreedrawGestureRecognizer` to respond to changes in the undo state of the class object.
+public protocol PDFFreedrawGestureRecognizerUndoDelegate {
+    func freedrawUndoStateChanged()
+}
+
 class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// The color used by the free draw annotation
     public static var color = UIColor.red
@@ -22,8 +27,16 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// The type of free draw annotation. Select between pen, highlighter and eraser
     public static var type : FreedrawType = .pen
     
-    /// Undo Manager for PDFFreedrawGestureRecognizer
-    public let undoManager = UndoManager()
+    /// The number of annotations to keep in the undo history. The default is 10
+    public var maxUndoNumber : Int = 10
+    
+    /// Bool indicating whether there are annotations that can be undone
+    public var canUndo = false
+    
+    /// Bool indicating whether there are annotations that can be redone
+    public var canRedo = false
+    
+    public var undoDelegate : PDFFreedrawGestureRecognizerUndoDelegate?
     
     private var drawVeil = UIView() // will be used for temporary CAShapeLayer
     private var startLocation : CGPoint?
@@ -34,11 +47,8 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     private var pdfView : PDFView?
     private var currentAnnotation : PDFAnnotation?
     private var annotation : PDFAnnotation!
-    private enum UndoManagerAction {
-        case undo
-        case redo
-    }
-    private var undoManagerAction : UndoManagerAction = .undo
+    private var annotationsToUndo : [(PDFAnnotation, FreedrawType)] = []
+    private var annotationsToRedo : [(PDFAnnotation, FreedrawType)] = []
     
     convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
         PDFFreedrawGestureRecognizer.color = color ?? UIColor.red
@@ -74,8 +84,6 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             drawVeil.isUserInteractionEnabled = false
             DispatchQueue.main.async {
                 self.pdfView?.superview?.addSubview(self.drawVeil)
-//                self.pdfView?.superview?.sendSubviewToBack(self.drawVeil)
-//                self.pdfView?.superview?.sendSubviewToBack(self.pdfView!)
                 
                 // movedTest will be used in touchedEnded to ascertain if we moved, or just tapped
                 self.movedTest = touch.location(in: self.view)
@@ -132,8 +140,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                             if annotation.bounds.intersects(rect) {
                                 self.pdfView?.currentPage?.removeAnnotation(annotation)
                                 self.annotation = annotation // Make sure we register the right annotation
-                                self.undoManagerAction = .redo // Reset the undo/redo cycle
-                                self.registerUndoRedo()
+                                self.registerUndo()
                             }
                         }
                         
@@ -211,8 +218,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                             if annotation.bounds.intersects(rect) {
                                 self.pdfView?.currentPage?.removeAnnotation(annotation)
                                 self.annotation = annotation // Make sure we register the right annotation
-                                self.undoManagerAction = .redo // Reset the undo/redo cycle
-                                self.registerUndoRedo()
+                                self.registerUndo()
                             }
                         }
                         // Remove the UIView for the CAShapeLayer
@@ -240,8 +246,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         _ = self.signingPath.moveCenter(to: rect.center)
                         self.annotation.add(self.signingPath)
                         self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation(self.annotation)
-                        self.undoManagerAction = .undo // Reset the undo/redo cycle
-                        self.registerUndoRedo()
+                        self.registerUndo()
                         
                         // Clear the drawVeil its UIBezierPath
                         // Remove the UIView for the CAShapeLayer
@@ -265,17 +270,74 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     }
     
     /// Function that toggles the undo manager registration of the last annotation drawn between undo and redo
-    public func registerUndoRedo() {
-        if undoManagerAction == .redo {
-            undoManager.registerUndo(withTarget: self, handler: { (selfTarget) in
-                selfTarget.pdfView?.document?.page(at: (selfTarget.pdfView?.document?.index(for: (selfTarget.pdfView?.currentPage!)!))!)?.addAnnotation(self.annotation)
-            })
-            undoManagerAction = .undo
-        } else {
-            undoManager.registerUndo(withTarget: self, handler: { (selfTarget) in
-                selfTarget.pdfView?.document?.page(at: (selfTarget.pdfView?.document?.index(for: (selfTarget.pdfView?.currentPage!)!))!)?.removeAnnotation(self.annotation)
-            })
-            undoManagerAction = .redo
+    public func registerUndo() {
+        annotationsToUndo.append((annotation, PDFFreedrawGestureRecognizer.type))
+        if annotationsToUndo.count > maxUndoNumber {
+            annotationsToUndo.removeFirst()
         }
+        updateUndoRedoState()
+    }
+    
+    private func updateUndoRedoState() {
+        if annotationsToUndo.count > 0 {
+            if canUndo == false {
+                canUndo = true
+                // The state changed. alert the delegate
+                undoDelegate?.freedrawUndoStateChanged()
+            }
+        } else {
+            if canUndo == true {
+                canUndo = false
+                // The state changed. alert the delegate
+                undoDelegate?.freedrawUndoStateChanged()
+            }
+        }
+        if annotationsToRedo.count > 0 {
+            if canRedo == false {
+                canRedo = true
+                // The state changed. alert the delegate
+                undoDelegate?.freedrawUndoStateChanged()
+            }
+        } else {
+            if canRedo == true {
+                canRedo = false
+                // The state changed. alert the delegate
+                undoDelegate?.freedrawUndoStateChanged()
+            }
+        }
+    }
+    
+    /// Undo annotations by order of creation, up to the number set by `maxUndoNumber`
+    public func undoAnnotation() {
+        let annotationToRemove = annotationsToUndo.popLast()
+        guard annotationToRemove != nil else { return }
+        if annotationToRemove?.1 != .eraser {
+            DispatchQueue.main.async {
+                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.removeAnnotation((annotationToRemove?.0)!)
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation((annotationToRemove?.0)!)
+            }
+        }
+        annotationsToRedo.append(annotationToRemove!)
+        updateUndoRedoState()
+    }
+    
+    /// Redo annotations by reverse order of undoing
+    public func redoAnnotation() {
+        let annotationToRestore = annotationsToRedo.popLast()
+        guard annotationToRestore != nil else { return }
+        if annotationToRestore?.1 != .eraser {
+            DispatchQueue.main.async {
+                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation((annotationToRestore?.0)!)
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.removeAnnotation((annotationToRestore?.0)!)
+            }
+        }
+        annotationsToUndo.append(annotationToRestore!)
+        updateUndoRedoState()
     }
 }
