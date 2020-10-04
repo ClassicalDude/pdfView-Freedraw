@@ -9,5 +9,8 @@ For the time being, download the entire project to test it.
 
 To use the class in your project, you will need to include PDFFreedrawGestureRecognizer.swift and UIBezierPath+.swift.
 
+## Branches
+The main branch includes support for multiple undo/redo actions. Switch to the simpleUndo branch for a redo/undo toggle for the last action only.
+
 ## Usage
 Please consult the ViewController.swift file.
