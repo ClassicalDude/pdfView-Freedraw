@@ -20,16 +20,28 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         
         // Prepare the example PDF document and PDF view
         let pdfDocument = PDFDocument(url: Bundle.main.url(forResource: "blank", withExtension: "pdf")!)
-        let pdfView = PDFView(frame: view.frame)
-        pdfView.document = pdfDocument
-        DispatchQueue.main.async {
+        let pdfView = PDFView()
+        DispatchQueue.main.async { // Layout should be done on the main thread
+        
+            pdfView.frame = self.view.frame
             self.view.addSubview(pdfView)
             self.view.sendSubviewToBack(pdfView)
+            
+            // autoScales must be set to true, otherwise the swipe motion will drag the canvas instead of drawing
+            pdfView.autoScales = true
+            
+            // Deal with the page shadows that appear by default
+            if #available(iOS 12.0, *) {
+                pdfView.pageShadowsEnabled = false
+            } else {
+                pdfView.layer.borderWidth = 15 // iOS 11: hide the d*** shadow
+                pdfView.layer.borderColor = UIColor.white.cgColor
+            }
+            
+            // For iOS 11-12, the document should be loaded only after the view is in the stack. If this is called outside the DispatchQueue block, it may be executed too early
+            pdfView.document = pdfDocument
+            
         }
-        
-        // The following is mandatory for using a PDFDrawGestureRecognizer:
-        // autoScales must be set to true, otherwise the swipe motion will drag the canvas instead of drawing
-        pdfView.autoScales = true
         
         // Define the gesture recognizer. You can use a default initializer for a narrow red pen
         pdfFreedraw = PDFFreedrawGestureRecognizer(color: UIColor.blue, width: 3, type: .pen)
