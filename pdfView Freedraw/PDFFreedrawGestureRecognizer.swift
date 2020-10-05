@@ -61,11 +61,13 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         
         // Get the PDFView to annotate
         let possiblePDFViews = self.view?.subviews.filter({$0 is PDFView})
-        if (possiblePDFViews?.count ?? 0) > 0 {
+        if (possiblePDFViews?.count ?? 0) > 1 {
+            print ("PDFFreedrawGestureRecognizer cannot be attached to a view that has more than one PDFView as a subview")
+            return
+        }
+        if (possiblePDFViews?.count ?? 0) == 1 {
             for possiblePDFView in possiblePDFViews! {
-                if possiblePDFView is PDFView {
-                    pdfView = possiblePDFView as? PDFView
-                }
+                pdfView = possiblePDFView as? PDFView
             }
         }
         if pdfView == nil {
@@ -136,11 +138,13 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     // Erase annotation if in eraser mode
                     if PDFFreedrawGestureRecognizer.type == .eraser {
                         let annotations = self.pdfView?.currentPage?.annotations
-                        for annotation in annotations! {
-                            if annotation.bounds.intersects(rect) {
-                                self.pdfView?.currentPage?.removeAnnotation(annotation)
-                                self.annotation = annotation // Make sure we register the right annotation
-                                self.registerUndo()
+                        if (annotations?.count ?? 0) > 0 {
+                            for annotation in annotations! {
+                                if annotation.bounds.intersects(rect) {
+                                    self.pdfView?.currentPage?.removeAnnotation(annotation)
+                                    self.annotation = annotation // Make sure we register the right annotation
+                                    self.registerUndo()
+                                }
                             }
                         }
                         
@@ -190,7 +194,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 // Get the current gesture location
                 let position = touch.location(in: self.pdfView)
                 
-                // Test if we indeed moved between touchesBegan and touchesEnded. If we did, apend the move to the UIBezierPath of the PDF annotation.
+                // Test if we indeed moved between touchesBegan and touchesEnded. If we did, append the move to the UIBezierPath of the PDF annotation.
                 if self.movedTest == touch.location(in: self.view) {
                     self.signingPath.removeAllPoints() // Prevent a short line when accessed from long tap
                 } else {
@@ -214,11 +218,13 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     // Eraser
                     if PDFFreedrawGestureRecognizer.type == .eraser {
                         let annotations = self.pdfView?.currentPage?.annotations
-                        for annotation in annotations! {
-                            if annotation.bounds.intersects(rect) {
-                                self.pdfView?.currentPage?.removeAnnotation(annotation)
-                                self.annotation = annotation // Make sure we register the right annotation
-                                self.registerUndo()
+                        if (annotations?.count ?? 0) > 0 {
+                            for annotation in annotations! {
+                                if annotation.bounds.intersects(rect) {
+                                    self.pdfView?.currentPage?.removeAnnotation(annotation)
+                                    self.annotation = annotation // Make sure we register the right annotation
+                                    self.registerUndo()
+                                }
                             }
                         }
                         // Remove the UIView for the CAShapeLayer
@@ -248,7 +254,6 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation(self.annotation)
                         self.registerUndo()
                         
-                        // Clear the drawVeil its UIBezierPath
                         // Remove the UIView for the CAShapeLayer
                         for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
                             drawVeilSubview.removeFromSuperview()
@@ -269,7 +274,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         }
     }
     
-    /// Function that toggles the undo manager registration of the last annotation drawn between undo and redo
+    /// Function that registers the last annotation action in the undo history
     public func registerUndo() {
         annotationsToUndo.append((annotation, PDFFreedrawGestureRecognizer.type))
         if annotationsToUndo.count > maxUndoNumber {
