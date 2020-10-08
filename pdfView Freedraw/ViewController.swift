@@ -22,13 +22,28 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         let pdfDocument = PDFDocument(url: Bundle.main.url(forResource: "blank", withExtension: "pdf")!)
         let pdfView = PDFView()
         DispatchQueue.main.async { // Layout should be done on the main thread
-        
+            
             pdfView.frame = self.view.frame
             self.view.addSubview(pdfView)
             self.view.sendSubviewToBack(pdfView)
             
-            // autoScales must be set to true, otherwise the swipe motion will drag the canvas instead of drawing
-            pdfView.autoScales = true
+            // The following block adjusts the view and its contents in an optimal way for display and annotation
+            
+            // First - a few useful options, now commented out
+            pdfView.displayMode = .singlePage
+            pdfView.displayDirection = .horizontal
+            pdfView.usePageViewController(false, withViewOptions: [:])
+            pdfView.translatesAutoresizingMaskIntoConstraints = true
+            pdfView.contentMode = .scaleAspectFit
+            
+            // From here - options that should probably be set
+            pdfView.autoresizesSubviews = true
+            pdfView.autoresizingMask = [.flexibleWidth, .flexibleHeight, .flexibleTopMargin, .flexibleLeftMargin]
+            pdfView.minScaleFactor = pdfView.scaleFactorForSizeToFit
+            pdfView.maxScaleFactor = pdfView.scaleFactorForSizeToFit
+            pdfView.sizeToFit()
+            pdfView.layoutDocumentView()
+            pdfView.maxScaleFactor = 5.0
             
             // Deal with the page shadows that appear by default
             if #available(iOS 12.0, *) {
@@ -40,6 +55,8 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
             
             // For iOS 11-12, the document should be loaded only after the view is in the stack. If this is called outside the DispatchQueue block, it may be executed too early
             pdfView.document = pdfDocument
+            // autoScales must be set to true, otherwise the swipe motion will drag the canvas instead of drawing. This should be done AFTER loading the document.
+            pdfView.autoScales = true
             
         }
         

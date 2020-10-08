@@ -137,17 +137,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     
                     // Erase annotation if in eraser mode
                     if PDFFreedrawGestureRecognizer.type == .eraser {
-                        let annotations = self.pdfView?.currentPage?.annotations
-                        if (annotations?.count ?? 0) > 0 {
-                            for annotation in annotations! {
-                                if annotation.bounds.intersects(rect) {
-                                    self.pdfView?.currentPage?.removeAnnotation(annotation)
-                                    self.annotation = annotation // Make sure we register the right annotation
-                                    self.registerUndo()
-                                }
-                            }
-                        }
-                        
+                        self.erase(rect: rect, pointInPage: convertedPoint, currentPath: self.signingPath)
                     } else {
                         
                         // Clear the remaining CAShapeLayer from the drawVeil
@@ -193,12 +183,13 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             DispatchQueue.main.async {
                 // Get the current gesture location
                 let position = touch.location(in: self.pdfView)
+                let convertedPoint = self.pdfView!.convert(position, to: self.pdfView!.page(for: position, nearest: true)!)
                 
                 // Test if we indeed moved between touchesBegan and touchesEnded. If we did, append the move to the UIBezierPath of the PDF annotation.
                 if self.movedTest == touch.location(in: self.view) {
                     self.signingPath.removeAllPoints() // Prevent a short line when accessed from long tap
                 } else {
-                    self.signingPath.addLine(to: self.pdfView!.convert(position, to: self.pdfView!.page(for: position, nearest: true)!))
+                    self.signingPath.addLine(to: convertedPoint)
                 }
                 if self.signingPath.isEmpty == false { // Prevent crashes with very short gestures
                     var rect = CGRect()
@@ -217,21 +208,12 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     
                     // Eraser
                     if PDFFreedrawGestureRecognizer.type == .eraser {
-                        let annotations = self.pdfView?.currentPage?.annotations
-                        if (annotations?.count ?? 0) > 0 {
-                            for annotation in annotations! {
-                                if annotation.bounds.intersects(rect) {
-                                    self.pdfView?.currentPage?.removeAnnotation(annotation)
-                                    self.annotation = annotation // Make sure we register the right annotation
-                                    self.registerUndo()
-                                }
-                            }
-                        }
+                        self.erase(rect: rect, pointInPage: convertedPoint, currentPath: self.signingPath)
                         // Remove the UIView for the CAShapeLayer
-                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
-                            drawVeilSubview.removeFromSuperview()
-                        }
-                        self.viewPath.removeAllPoints()
+//                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
+//                            drawVeilSubview.removeFromSuperview()
+//                        }
+//                        self.viewPath.removeAllPoints()
 
                     } else {
                         
@@ -344,5 +326,91 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         }
         annotationsToUndo.append(annotationToRestore!)
         updateUndoRedoState()
+    }
+    
+    private func erase(rect: CGRect, pointInPage: CGPoint, currentPath: UIBezierPath) {
+        let annotations = self.pdfView?.currentPage?.annotations
+        if (annotations?.count ?? 0) > 0 {
+            for annotation in annotations! {
+                // Initial test - intersection of the frames of the annotation and the current path. Continue only if true.
+                if annotation.bounds.intersects(rect) {
+                    if annotation.type == "Ink", let annotationPath = self.eraserTest(annotation: annotation, pointInPage: pointInPage) {
+                        let strokedCurrentPath = currentPath.cgPath.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0)
+                        let strokedCurrentBezierPath = UIBezierPath(cgPath: strokedCurrentPath)
+                        //let intersectingPaths : NSArray = UIBezierPath.redAndGreenAndBlueSegmentsCreated(from: annotationPath, bySlicingWith: strokedCurrentBezierPath, andNumberOfBlueShellSegments: nil)! as NSArray
+                        
+                        //print (intersectingPaths as! [UIBezierPath])
+                        
+                        // Draw temporary annotation on screen using a CAShapeLayer, to be replaced later with the PDFAnnotation
+                        var colorSelect = 0
+                        let colors = [UIColor.red, UIColor.green, UIColor.blue, UIColor.purple, UIColor.gray]
+                        //print (intersectingPaths.count)
+                        //for tempPath in intersectingPaths {
+                            //let testPaths : NSMutableArray = intersectingPaths[2] as! NSMutableArray
+                            //print ("sub: \(testPaths.count)")
+                            //for testPath in testPaths {
+                                //print ((testPath as! DKUIBezierPathClippedSegment).startIntersection)
+//                            let testPath = testPaths[0] as! DKUIBezierPathClippedSegment
+                        //for path in annotationPath.difference(with: strokedCurrentBezierPath) {
+                                let viewPathLayer = CAShapeLayer()
+                                viewPathLayer.strokeColor = colors[colorSelect].cgColor
+                                viewPathLayer.lineWidth = CGFloat(PDFFreedrawGestureRecognizer.width * self.pdfView!.scaleFactor)
+                                //viewPathLayer.path = (testPath as! DKUIBezierPathClippedSegment).pathSegment.cgPath
+                        let path1 = annotation.paths!.first!
+                        let origin = self.pdfView!.superview!.convert(annotation.bounds.origin, from: pdfView!)
+                        print ("page: \(self.pdfView!.currentPage?.annotations.first?.bounds.origin)")
+                        let pdfPageOrigin = self.pdfView!.convert((self.pdfView!.currentPage?.annotations.first?.bounds.origin)!, from: self.pdfView!.currentPage!)
+                        print ("pdfView: \(pdfPageOrigin)")
+                        print ("view: \(self.pdfView!.superview!.convert(pdfPageOrigin, to: self.pdfView!.superview!))")
+                        print ("page size: \(pdfView!.currentPage?.bounds(for: .cropBox))")
+                        print ("view size: \(pdfView!.frame)")
+                        print ("factor: \(pdfView!.scaleFactor)")
+                        print (pdfView!.convert(pdfView!.currentPage!.bounds(for: .cropBox), from: pdfView!.currentPage!))
+                        let pdfPageBounds = pdfView!.convert(pdfView!.currentPage!.bounds(for: .cropBox), from: pdfView!.currentPage!)
+                        path1.apply(CGAffineTransform(scaleX: pdfView!.scaleFactor, y: -pdfView!.scaleFactor))
+                        path1.apply(CGAffineTransform(translationX: origin.x*pdfView!.scaleFactor+pdfPageBounds.minX, y: self.pdfView!.bounds.height-pdfPageBounds.minY-origin.y*pdfView!.scaleFactor))
+                        viewPathLayer.path = path1.cgPath
+                            //viewPathLayer.path = path.cgPath
+                                viewPathLayer.fillColor = UIColor.clear.cgColor
+                                viewPathLayer.lineJoin = CAShapeLayerLineJoin.round
+                                viewPathLayer.lineCap = CAShapeLayerLineCap.round
+
+                                self.drawVeil.layer.addSublayer(viewPathLayer)
+                                
+                                colorSelect += 1
+                                if colorSelect >= colors.count { colorSelect = 0 }
+                            //}
+                        //}
+                        
+                        self.pdfView?.currentPage?.removeAnnotation(annotation)
+                        self.annotation = annotation // Make sure we register the right annotation
+                        self.registerUndo()
+                    }
+                }
+            }
+        }
+    }
+        
+    private func eraserTest(annotation: PDFAnnotation, pointInPage: CGPoint) -> UIBezierPath? {
+        guard (annotation.paths?.count ?? 0) > 0 else { return nil }
+        //let boundingRectOrigin = self.pdfView!.convert(CGPoint(x:annotation.bounds.origin.x, y:annotation.bounds.minY), from: pdfView!)
+        let boundingRectOrigin = self.pdfView!.superview!.convert(annotation.bounds.origin, from: pdfView!)
+        if let translatedPath = translate(path: annotation.paths!.first!.cgPath, by: boundingRectOrigin)?.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0) {
+            if translatedPath.contains(pointInPage) {
+                return UIBezierPath(cgPath: translate(path: annotation.paths!.first!.cgPath, by: boundingRectOrigin)!)
+            }
+        }
+        return nil
+    }
+    
+    private func translate(path : CGPath?, by point: CGPoint) -> CGPath? {
+        let bezeirPath = UIBezierPath()
+        guard let prevPath = path else {
+            return nil
+        }
+        bezeirPath.cgPath = prevPath
+        bezeirPath.apply(CGAffineTransform(translationX: point.x, y: point.y))
+
+        return bezeirPath.cgPath
     }
 }

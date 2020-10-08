@@ -16,6 +16,8 @@
 		E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E435F05F2526F7AE00A3BEEE /* blank.pdf */; };
 		E435F0632526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */; };
 		E435F067252711E700A3BEEE /* UIBezierPath+.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F066252711E700A3BEEE /* UIBezierPath+.swift */; };
+		E4F4FCE9252E63AC00850708 /* libPerformanceBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4F4FCE7252E63AB00850708 /* libPerformanceBezier.a */; };
+		E4F4FCEA252E63AC00850708 /* libClippingBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4F4FCE8252E63AC00850708 /* libClippingBezier.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,10 @@
 		E435F05F2526F7AE00A3BEEE /* blank.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = blank.pdf; sourceTree = "<group>"; };
 		E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFFreedrawGestureRecognizer.swift; sourceTree = "<group>"; };
 		E435F066252711E700A3BEEE /* UIBezierPath+.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIBezierPath+.swift"; sourceTree = "<group>"; };
+		E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Bridging-Header.h"; sourceTree = "<group>"; };
+		E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Prefix.pch"; sourceTree = "<group>"; };
+		E4F4FCE7252E63AB00850708 /* libPerformanceBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libPerformanceBezier.a; sourceTree = "<group>"; };
+		E4F4FCE8252E63AC00850708 /* libClippingBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libClippingBezier.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,6 +43,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E4F4FCEA252E63AC00850708 /* libClippingBezier.a in Frameworks */,
+				E4F4FCE9252E63AC00850708 /* libPerformanceBezier.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,8 +54,12 @@
 		E435F03E2526F73900A3BEEE = {
 			isa = PBXGroup;
 			children = (
+				E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */,
+				E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */,
 				E435F0492526F73900A3BEEE /* pdfView Freedraw */,
 				E435F0482526F73900A3BEEE /* Products */,
+				E4F4FCEB252E641500850708 /* Headers */,
+				E4F4FCE3252E62AE00850708 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -74,6 +86,22 @@
 				E435F05F2526F7AE00A3BEEE /* blank.pdf */,
 			);
 			path = "pdfView Freedraw";
+			sourceTree = "<group>";
+		};
+		E4F4FCE3252E62AE00850708 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E4F4FCE8252E63AC00850708 /* libClippingBezier.a */,
+				E4F4FCE7252E63AB00850708 /* libPerformanceBezier.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E4F4FCEB252E641500850708 /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Headers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -298,16 +326,29 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 57682FTYCX;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/pdfView-Freedraw-Prefix.pch";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Headers";
 				INFOPLIST_FILE = "pdfView Freedraw/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC++",
+					"-lstdc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ronregev.pdfView-Freedraw";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/pdfView-Freedraw-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -318,16 +359,29 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 57682FTYCX;
+				GCC_PREFIX_HEADER = "$(SRCROOT)/pdfView-Freedraw-Prefix.pch";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Headers";
 				INFOPLIST_FILE = "pdfView Freedraw/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC++",
+					"-lstdc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ronregev.pdfView-Freedraw";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/pdfView-Freedraw-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
