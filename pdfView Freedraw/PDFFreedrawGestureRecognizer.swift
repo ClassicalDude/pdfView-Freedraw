@@ -117,6 +117,12 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     return
                 }
                 
+                // Reset redo history after the touches started moving
+                if self.annotationsToRedo.count > 0 {
+                    self.annotationsToRedo.removeAll()
+                    self.updateUndoRedoState()
+                }
+                
                 // Get the current gesture location
                 let position = touch.location(in: self.pdfView)
                 let convertedPoint = self.pdfView!.convert(position, to: self.pdfView!.page(for: position, nearest: true)!)
