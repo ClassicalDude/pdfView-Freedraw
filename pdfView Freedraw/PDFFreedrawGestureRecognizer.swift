@@ -25,10 +25,13 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         case highlighter
     }
     /// The type of free draw annotation. Select between pen, highlighter and eraser
-    public static var type : FreedrawType = .pen
+    public static var inkType : FreedrawType = .pen
     
     /// The number of annotations to keep in the undo history. The default is 10
     public var maxUndoNumber : Int = 10
+    
+    /// When `true`, closed and nearly-closed curves will be drawn as perfect ovals
+    public var convertClosedCurvesToOvals = false
     
     /// Bool indicating whether there are annotations that can be undone
     public var canUndo = false
@@ -38,81 +41,104 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     public var undoDelegate : PDFFreedrawGestureRecognizerUndoDelegate?
     
-    private var drawVeil = UIView() // will be used for temporary CAShapeLayer
-    private var startLocation : CGPoint?
-    private var movedTest : CGPoint?
-    private var totalDistance : CGFloat = 0
-    private var signingPath = UIBezierPath()
-    private var viewPath = UIBezierPath()
-    private var pdfView : PDFView?
-    private var currentAnnotation : PDFAnnotation?
-    private var annotation : PDFAnnotation!
+    private var passedSafetyChecks = false // Used to record all of the unwrappings of touchesBegan
+    private var drawVeil = UIView() // Used for temporary on a CAShapeLayer during touchesMoved
+    private var startLocation : CGPoint? // Starting touch point for every touches function
+    private var movedTest : CGPoint? // Used to compare locations between touchesBegan and touchesEnded, to ensure there actually was a moving gesture
+    private var totalDistance : CGFloat = 0 // Used to measure overall distances between the touches functions, to ensure there was a moving gesture
+    private var signingPath = UIBezierPath() // The path in the PDF page coordinate system
+    private var viewPath = UIBezierPath() // The path in the UIView coordinate system
+    private var pdfView : PDFView! // The view of the PDF document
+    private var currentPDFPage : PDFPage! // Safely unwrapped variable used for the current PDF page
+    private var annotation : PDFAnnotation! // The annotation we are actively drawing or deleting
+    private var originalAnnotationColor : UIColor! // Used to track the active PDF annotation color when it is hidden during the erasing process
+    // Undo manager variables
     private var annotationsToUndo : [(PDFAnnotation, FreedrawType)] = []
     private var annotationsToRedo : [(PDFAnnotation, FreedrawType)] = []
     
     convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
         PDFFreedrawGestureRecognizer.color = color ?? UIColor.red
         PDFFreedrawGestureRecognizer.width = width ?? 3
-        PDFFreedrawGestureRecognizer.type = type ?? .pen
+        PDFFreedrawGestureRecognizer.inkType = type ?? .pen
         self.init()
     }
     
+    // MARK: Touches Began
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
-        // Get the PDFView to annotate
-        let possiblePDFViews = self.view?.subviews.filter({$0 is PDFView})
-        if (possiblePDFViews?.count ?? 0) > 1 {
-            print ("PDFFreedrawGestureRecognizer cannot be attached to a view that has more than one PDFView as a subview")
-            return
-        }
-        if (possiblePDFViews?.count ?? 0) == 1 {
-            for possiblePDFView in possiblePDFViews! {
-                pdfView = possiblePDFView as? PDFView
+        // Perform safety checks and get the PDFView to annotate
+        if let possiblePDFViews = self.view?.subviews.filter({$0 is PDFView}) {
+            if possiblePDFViews.count > 1 {
+                print ("PDFFreedrawGestureRecognizer cannot be attached to a view that has more than one PDFView as a subview")
+                return
+            } else if possiblePDFViews.count == 0 {
+                print ("PDFFreedrawGestureRecognizer must be attached to a superview of a PDFView")
+                return
+            } else {
+                pdfView = possiblePDFViews[0] as? PDFView
             }
         }
-        if pdfView == nil {
-            print ("PDFFreedrawGestureRecognizer must be attached to a superview of a PDFView")
+        
+        // Check if the pdfView is user interaction enabled. Set that property to false in your view controller in order to disable drawing and resume regular pdfView gestures.
+        if pdfView.isUserInteractionEnabled {
             return
         }
-        if pdfView!.isUserInteractionEnabled {
-            return
+        
+        // Check that we have a valid pdfDocument
+        if pdfView.document == nil {
+            print ("There is no document associated with the PDF view. Exiting PDFFreedrawGestureRecognizer")
         }
+        
+        // Check that we have a valid pdfPage and assign it to the class variable
+        if let currentPDFPageTest = pdfView.document!.page(at: (pdfView.document!.index(for: (pdfView.currentPage ?? PDFPage())))) {
+            currentPDFPage = currentPDFPageTest
+        }
+        
+        // Record the fact that we got that far, to be used in touchesMoved and touchesEnded
+        passedSafetyChecks = true
         
         if let touch = touches.first {
             
-            // Attach the UIView that we will use to draw the annotation on a CALayer, until the touches end
-            drawVeil = UIView(frame: pdfView!.frame)
-            drawVeil.tag = 35791 // For identifying and removing all instances later on
-            drawVeil.isUserInteractionEnabled = false
             DispatchQueue.main.async {
-                self.pdfView?.superview?.addSubview(self.drawVeil)
+                
+                // Attach the UIView that we will use to draw the annotation on a CALayer, until the touches end
+                self.drawVeil = UIView(frame: self.pdfView.frame)
+                self.drawVeil.tag = 35791 // For identifying and removing all instances later on
+                self.drawVeil.isUserInteractionEnabled = false
+                self.pdfView.superview!.addSubview(self.drawVeil)
                 
                 // movedTest will be used in touchedEnded to ascertain if we moved, or just tapped
                 self.movedTest = touch.location(in: self.view)
+                guard (self.movedTest != nil) else { return }
                 
                 // startLocation will be used for adding to the UIBezierPath
                 self.startLocation = touch.location(in: self.pdfView)
                 guard (self.startLocation != nil) else { return }
                 self.totalDistance = 0
-
+                
+                // Clear and initialize the UIBezierPath used on the PDF page coordinate system
                 self.signingPath = UIBezierPath()
                 self.signingPath.move(to: self.pdfView!.convert(self.startLocation!, to: self.pdfView!.page(for: self.startLocation!, nearest: true)!))
+                
+                // Clear and initialize the UIBezierPath for the CAShapeLayer we will use during touchesMoved
+                self.viewPath = UIBezierPath()
+                self.viewPath.move(to: self.startLocation!)
             }
         }
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if pdfView == nil || pdfView!.isUserInteractionEnabled{
+        if !passedSafetyChecks {
             return
         }
-        if let touch = touches.first, let startLocation = startLocation {
+        
+        if let touch = touches.first {
             DispatchQueue.main.async {
                 
                 // Test for minimal viable distance to register the move
                 let currentLocation = touch.location(in: self.pdfView)
-                let dX = currentLocation.x - startLocation.x
-                let dY = currentLocation.y - startLocation.y
-                self.totalDistance += sqrt(pow(dX, 2) + pow(dY, 2))
+                let vector = currentLocation.vector(to: self.startLocation!)
+                self.totalDistance += sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
                 if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
                     return
                 }
@@ -129,142 +155,189 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 // Add line to the PDF annotation UIBezierPath
                 self.signingPath.addLine(to: convertedPoint) // For the PDFAnnotation
                 
-                // Create a UIBezierPath and a line for the CAShapeLayer we will use during this phase of the touches
-                self.viewPath.move(to: self.startLocation!) // For the CAShapeLayer
+                // Add line to the CAShapeLayer UIBezierPath
                 self.viewPath.addLine(to: currentLocation)
-                if self.signingPath.isEmpty == false { // Prevent crashes with very short gestures
-                    var rect = CGRect()
-                    if PDFFreedrawGestureRecognizer.type != .eraser {
-                        // Change the rect to allow for lines wider than a point. Not needed for the eraser.
-                        rect = CGRect(x:self.signingPath.bounds.minX-PDFFreedrawGestureRecognizer.width/2, y:self.signingPath.bounds.minY-PDFFreedrawGestureRecognizer.width/2, width:self.signingPath.bounds.maxX-self.signingPath.bounds.minX+PDFFreedrawGestureRecognizer.width, height:self.signingPath.bounds.maxY-self.signingPath.bounds.minY+PDFFreedrawGestureRecognizer.width)
-                    } else {
-                        rect = self.signingPath.bounds
+                
+                // Prevent crashes with very short gestures
+                if self.signingPath.isEmpty {
+                    // Remove the UIView for the CAShapeLayer
+                    self.removeDrawVeil()
+                    return
+                }
+                
+                // Create bounding rect for the annotation
+                var rect = CGRect()
+                if PDFFreedrawGestureRecognizer.inkType != .eraser {
+                    // Change the rect to allow for lines wider than a point. Not needed for the eraser.
+                    rect = CGRect(x:self.signingPath.bounds.minX-PDFFreedrawGestureRecognizer.width/2, y:self.signingPath.bounds.minY-PDFFreedrawGestureRecognizer.width/2, width:self.signingPath.bounds.maxX-self.signingPath.bounds.minX+PDFFreedrawGestureRecognizer.width, height:self.signingPath.bounds.maxY-self.signingPath.bounds.minY+PDFFreedrawGestureRecognizer.width)
+                } else {
+                    rect = self.signingPath.bounds
+                }
+                
+                // Erase annotation if in eraser mode
+                if PDFFreedrawGestureRecognizer.inkType == .eraser {
+                    self.erase(rect: rect, pointInPage: convertedPoint, currentPath: self.signingPath)
+                } else {
+                    
+                    // Clear any remaining CAShapeLayer from the drawVeil. We cannot use the helper function here, because two DispatchQueues create a race condition.
+                    if self.drawVeil.layer.sublayers != nil {
+                        for layer in self.drawVeil.layer.sublayers! {
+                            layer.removeFromSuperlayer()
+                        }
                     }
                     
-                    // Erase annotation if in eraser mode
-                    if PDFFreedrawGestureRecognizer.type == .eraser {
-                        self.erase(rect: rect, pointInPage: convertedPoint, currentPath: self.signingPath)
-                    } else {
-                        
-                        // Clear the remaining CAShapeLayer from the drawVeil
-                        self.drawVeil.layer.sublayers?[0].removeFromSuperlayer()
-                        
-                        var alphaComponent : CGFloat = 1.0
-                        if PDFFreedrawGestureRecognizer.type == .highlighter {
-                            alphaComponent = 0.3
-                        }
-                        
-                        // Draw temporary annotation on screen using a CAShapeLayer, to be replaced later with the PDFAnnotation
-                        let viewPathLayer = CAShapeLayer()
-                        viewPathLayer.strokeColor = PDFFreedrawGestureRecognizer.color.withAlphaComponent(alphaComponent).cgColor
-                        viewPathLayer.lineWidth = CGFloat(PDFFreedrawGestureRecognizer.width * self.pdfView!.scaleFactor)
-                        viewPathLayer.path = self.viewPath.cgPath
-                        viewPathLayer.fillColor = UIColor.clear.cgColor
-                        viewPathLayer.lineJoin = CAShapeLayerLineJoin.round
-                        viewPathLayer.lineCap = CAShapeLayerLineCap.round
+                    // Choose the transparency of the annotation based on its type
+                    var alphaComponent : CGFloat = 1.0
+                    if PDFFreedrawGestureRecognizer.inkType == .highlighter {
+                        alphaComponent = 0.3
+                    }
+                    
+                    // Draw temporary annotation on screen using a CAShapeLayer, to be replaced later with the PDFAnnotation
+                    let viewPathLayer = CAShapeLayer()
+                    viewPathLayer.strokeColor = PDFFreedrawGestureRecognizer.color.withAlphaComponent(alphaComponent).cgColor
+                    viewPathLayer.lineWidth = CGFloat(PDFFreedrawGestureRecognizer.width * self.pdfView!.scaleFactor) // Note the use of the scale factor! Necessary for keeping this drawing identical to the final PDF annotation
+                    viewPathLayer.path = self.viewPath.cgPath
+                    viewPathLayer.fillColor = UIColor.clear.cgColor
+                    viewPathLayer.lineJoin = CAShapeLayerLineJoin.round
+                    viewPathLayer.lineCap = CAShapeLayerLineCap.round
 
-                        self.drawVeil.layer.addSublayer(viewPathLayer)
-                        
-                        // Update the startLocation for touchesEnded below
-                        self.startLocation = currentLocation
-                    }
-                } else {
-                    // Signing path was empty
-                    DispatchQueue.main.async {
-                        // Remove the UIView for the CAShapeLayer
-                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
-                            drawVeilSubview.removeFromSuperview()
-                        }
-                    }
+                    self.drawVeil.layer.addSublayer(viewPathLayer)
+                    
+                    // Update the startLocation for touchesEnded below
+                    self.startLocation = currentLocation
                 }
             }
         }
     }
     
+    // MARK: Touches Ended
+    
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if pdfView == nil || pdfView!.isUserInteractionEnabled {
+        if !passedSafetyChecks {
             return
         }
+        
         if let touch = touches.first {
             DispatchQueue.main.async {
+                
+                // Test for minimal viable distance to register the move
+                let currentLocation = touch.location(in: self.pdfView)
+                let vector = currentLocation.vector(to: self.movedTest!)
+                self.totalDistance += sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
+                if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
+                    self.signingPath.removeAllPoints() // Prevent a short line when accessed from long tap
+                }
+                
                 // Get the current gesture location
                 let position = touch.location(in: self.pdfView)
                 let convertedPoint = self.pdfView!.convert(position, to: self.pdfView!.page(for: position, nearest: true)!)
                 
-                // Test if we indeed moved between touchesBegan and touchesEnded. If we did, append the move to the UIBezierPath of the PDF annotation.
-                if self.movedTest == touch.location(in: self.view) {
-                    self.signingPath.removeAllPoints() // Prevent a short line when accessed from long tap
-                } else {
-                    self.signingPath.addLine(to: convertedPoint)
-                }
-                if self.signingPath.isEmpty == false { // Prevent crashes with very short gestures
-                    var rect = CGRect()
-                    if PDFFreedrawGestureRecognizer.type != .eraser {
-                        // Change the rect to allow for lines wider than a point. Not needed for the eraser.
-                        rect = CGRect(x:self.signingPath.bounds.minX-PDFFreedrawGestureRecognizer.width/2, y:self.signingPath.bounds.minY-PDFFreedrawGestureRecognizer.width/2, width:self.signingPath.bounds.maxX-self.signingPath.bounds.minX+PDFFreedrawGestureRecognizer.width, height:self.signingPath.bounds.maxY-self.signingPath.bounds.minY+PDFFreedrawGestureRecognizer.width)
-                    } else {
-                        rect = self.signingPath.bounds
-                    }
-                    
-                    // Create the PDF annotation
-                    self.currentAnnotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
+                // Append the move to the UIBezierPath of the PDF annotation.
+                self.signingPath.addLine(to: convertedPoint)
                 
-                    // Workaround for a bug in PDFKit - remove the annotation before you add it
-                    self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.removeAnnotation(self.currentAnnotation!)
-                    
-                    // Eraser
-                    if PDFFreedrawGestureRecognizer.type == .eraser {
-                        self.erase(rect: rect, pointInPage: convertedPoint, currentPath: self.signingPath)
-                        // Remove the UIView for the CAShapeLayer
+                // Prevent crashes with very short gestures. This will also be called if we failed the distance check earlier, because the signing path was emptied.
+                if self.signingPath.isEmpty {
+                    self.viewPath.removeAllPoints()
+                    // Remove the UIView for the CAShapeLayer
+                    self.removeDrawVeil()
+                    return
+                }
+                
+                // Create bounding rect for the annotation
+                var rect = CGRect()
+                if PDFFreedrawGestureRecognizer.inkType != .eraser {
+                    // Change the rect to allow for lines wider than a point. Not needed for the eraser.
+                    rect = CGRect(x:self.signingPath.bounds.minX-PDFFreedrawGestureRecognizer.width/2, y:self.signingPath.bounds.minY-PDFFreedrawGestureRecognizer.width/2, width:self.signingPath.bounds.maxX-self.signingPath.bounds.minX+PDFFreedrawGestureRecognizer.width, height:self.signingPath.bounds.maxY-self.signingPath.bounds.minY+PDFFreedrawGestureRecognizer.width)
+                } else {
+                    rect = self.signingPath.bounds
+                }
+                
+                // Create a temporary PDF annotation for a framework workaround
+                let currentAnnotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
+            
+                // Workaround for a bug in PDFKit - remove the annotation before you add it
+                self.currentPDFPage.removeAnnotation(currentAnnotation)
+                
+                // Eraser
+                if PDFFreedrawGestureRecognizer.inkType == .eraser {
+                    self.erase(rect: rect, pointInPage: convertedPoint, currentPath: self.signingPath)
+                    // Remove the UIView for the CAShapeLayer
 //                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
 //                            drawVeilSubview.removeFromSuperview()
 //                        }
 //                        self.viewPath.removeAllPoints()
 
-                    } else {
-                        
-                        // Create the annotation we will save
-                        self.annotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
-                        let b = PDFBorder()
-                        if PDFFreedrawGestureRecognizer.type != .eraser {
-                            b.lineWidth = PDFFreedrawGestureRecognizer.width
-                        } else {
-                            b.lineWidth = 1
-                        }
-                        self.annotation.border = b
-                        var alphaComponent : CGFloat = 1.0
-                        if PDFFreedrawGestureRecognizer.type == .highlighter {
-                            alphaComponent = 0.3
-                        }
-                        self.annotation.color = PDFFreedrawGestureRecognizer.color.withAlphaComponent(alphaComponent)
-                        _ = self.signingPath.moveCenter(to: rect.center)
-                        self.annotation.add(self.signingPath)
-                        self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation(self.annotation)
-                        self.registerUndo()
-                        
-                        // Remove the UIView for the CAShapeLayer
-                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
-                            drawVeilSubview.removeFromSuperview()
-                        }
-                        self.viewPath.removeAllPoints()
-                    }
                 } else {
-                    // Signing path was empty
-                    self.viewPath.removeAllPoints()
-                    DispatchQueue.main.async {
-                        // Remove the UIView for the CAShapeLayer
-                        for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
-                            drawVeilSubview.removeFromSuperview()
-                        }
+                    
+                    // Check if we created a circle. If we did, and the class variable for this is true, get a revised path.
+                    
+                    if self.convertClosedCurvesToOvals, self.testForClosedCurve(path: self.signingPath), PDFFreedrawGestureRecognizer.inkType != .eraser {
+                        self.signingPath = self.ovalFromClosedCurve(rect: rect)
                     }
+                    
+                    // Create the annotation we will save
+                    self.annotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
+                    let b = PDFBorder()
+                    if PDFFreedrawGestureRecognizer.inkType != .eraser {
+                        b.lineWidth = PDFFreedrawGestureRecognizer.width
+                    } else {
+                        b.lineWidth = 1
+                    }
+                    self.annotation.border = b
+                    var alphaComponent : CGFloat = 1.0
+                    if PDFFreedrawGestureRecognizer.inkType == .highlighter {
+                        alphaComponent = 0.3
+                    }
+                    self.annotation.color = PDFFreedrawGestureRecognizer.color.withAlphaComponent(alphaComponent)
+                    _ = self.signingPath.moveCenter(to: rect.center)
+                    self.annotation.add(self.signingPath)
+                    self.currentPDFPage.addAnnotation(self.annotation)
+                    self.registerUndo()
+                    
+                    // Remove the UIView for the CAShapeLayer
+                    self.removeDrawVeil()
+                    self.viewPath.removeAllPoints()
                 }
             }
         }
     }
     
+    // MARK: Closed Curves to Perfect Ovals
+    
+    // Function that tests if the path is nearly closed and without straight lines
+    private func testForClosedCurve(path: UIBezierPath) -> Bool {
+        
+        // Get the distance between the path's start and end point
+        let vector = path.firstPoint().vector(to: path.lastPoint())
+        let distance = sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
+        if distance > 10 {
+            return false
+        }
+        
+        // Get the distances between each pair of adjacent points on the path. Return false if any of them is bigger than 20.
+        let pathPoints = getPathPoints(path: path)
+        for i in 0..<pathPoints.count-1 {
+            let pathPointsVector = pathPoints[i].vector(to: pathPoints[i+1])
+            let pathPointsDistance = sqrt(pow(pathPointsVector.dx, 2) + pow(pathPointsVector.dy, 2))
+            if pathPointsDistance > 20 {
+                return false
+            }
+        }
+        return true
+    }
+    
+    // Function that returns a perfect oval from a given rect as an open path - so that the eraser can work
+    private func ovalFromClosedCurve(rect: CGRect) -> UIBezierPath {
+        let initialOval = UIBezierPath(ovalIn: rect)
+        return getOvalOpenPath(path: initialOval)
+    }
+    
+    
+    // MARK: Undo Manager
+    
     /// Function that registers the last annotation action in the undo history
     public func registerUndo() {
-        annotationsToUndo.append((annotation, PDFFreedrawGestureRecognizer.type))
+        annotationsToUndo.append((annotation, PDFFreedrawGestureRecognizer.inkType))
         if annotationsToUndo.count > maxUndoNumber {
             annotationsToUndo.removeFirst()
         }
@@ -395,6 +468,99 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 }
             }
         }
+    }
+    
+    // MARK: Helper Functions
+    // Function that clears any CAShape sublayers of the UIView
+    private func clearCAShapeLayer() {
+        DispatchQueue.main.async {
+            if self.drawVeil.layer.sublayers != nil {
+                for layer in self.drawVeil.layer.sublayers! {
+                    layer.removeFromSuperlayer()
+                }
+            }
+        }
+    }
+    
+    // Function that removes the drawVeil
+    private func removeDrawVeil() {
+        DispatchQueue.main.async {
+            for drawVeilSubview in self.pdfView.superview!.subviews.filter({$0.tag==35791}) {
+                drawVeilSubview.removeFromSuperview()
+            }
+        }
+    }
+    
+    // Function that extracts all points from a UIBezierPath, using the Clipping Bezier library
+    private func getPathPoints(path: UIBezierPath) -> [CGPoint] {
+        var pathPoints : [CGPoint] = []
+        var counter = path.elementCount
+        if path.isClosed() {
+            counter -= 1 // In a closed path, the last element does not have a point
+        }
+        for i in 0..<counter {
+            pathPoints.append(path.element(at: i).points.pointee)
+        }
+        return pathPoints
+    }
+    
+    // Function that extracts all points, including control points, from a UIBezierPath. The second part of the function is more specific: it creates an open path for curves created by the points.
+    private func getOvalOpenPath(path: UIBezierPath) -> UIBezierPath {
+        var bezierPoints = NSMutableArray()
+        path.cgPath.apply(info: &bezierPoints, function: { info, element in
+
+                guard let resultingPoints = info?.assumingMemoryBound(to: NSMutableArray.self) else {
+                    return
+                }
+
+                let points = element.pointee.points
+                let type = element.pointee.type
+
+                switch type {
+                case .moveToPoint:
+                    resultingPoints.pointee.add([NSNumber(value: Float(points[0].x)), NSNumber(value: Float(points[0].y))])
+                    resultingPoints.pointee.add(NSString("move"))
+
+                case .addLineToPoint:
+                    resultingPoints.pointee.add([NSNumber(value: Float(points[0].x)), NSNumber(value: Float(points[0].y))])
+                    resultingPoints.pointee.add(NSString("addLine"))
+
+                case .addQuadCurveToPoint:
+                    resultingPoints.pointee.add([NSNumber(value: Float(points[0].x)), NSNumber(value: Float(points[0].y))])
+                    resultingPoints.pointee.add([NSNumber(value: Float(points[1].x)), NSNumber(value: Float(points[1].y))])
+                    resultingPoints.pointee.add(NSString("addQuadCurve"))
+
+                case .addCurveToPoint:
+                    resultingPoints.pointee.add([NSNumber(value: Float(points[0].x)), NSNumber(value: Float(points[0].y))])
+                    resultingPoints.pointee.add([NSNumber(value: Float(points[1].x)), NSNumber(value: Float(points[1].y))])
+                    resultingPoints.pointee.add([NSNumber(value: Float(points[2].x)), NSNumber(value: Float(points[2].y))])
+                    resultingPoints.pointee.add(NSString("addCurve"))
+
+                case .closeSubpath:
+                    break
+                @unknown default:
+                    break
+                }
+            })
+        let elementsTypes : [String] = bezierPoints.compactMap { $0 as? String }
+        let elementsCGFloats : [[CGFloat]] = bezierPoints.compactMap { $0 as? [CGFloat] }
+        var elementsCGPoints : [CGPoint] = elementsCGFloats.map { CGPoint(x: $0[0], y: $0[1]) }
+        
+        let ovalOpenPath = UIBezierPath()
+        for i in 0..<elementsTypes.count {
+            switch elementsTypes[i] {
+            case "move":
+                ovalOpenPath.move(to: elementsCGPoints.removeFirst())
+            case "addCurve":
+                let controlPoint1 = elementsCGPoints.removeFirst()
+                let controlPoint2 = elementsCGPoints.removeFirst()
+                let point = elementsCGPoints.removeFirst()
+                ovalOpenPath.addCurve(to: point, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
+            default:
+                break
+            }
+        }
+        return ovalOpenPath
     }
         
     private func eraserTest(annotation: PDFAnnotation, pointInPage: CGPoint) -> UIBezierPath? {

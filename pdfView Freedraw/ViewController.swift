@@ -10,6 +10,10 @@ import PDFKit
 
 class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedrawGestureRecognizerUndoDelegate {
     
+    @IBOutlet weak var blueLineOutlet: UIButton!
+    @IBOutlet weak var redHighlightOutlet: UIButton!
+    @IBOutlet weak var eraserOutlet: UIButton!
+    @IBOutlet weak var perfectOvalsOutlet: UIButton!
     @IBOutlet weak var undoOutlet: UIButton!
     @IBOutlet weak var redoOutlet: UIButton!
     
@@ -17,6 +21,13 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Set up the buttons
+        redHighlightOutlet.tintColor = UIColor.red
+        eraserOutlet.tintColor = UIColor.systemGreen
+        perfectOvalsOutlet.tintColor = UIColor.darkGray
+        undoOutlet.setTitleColor(UIColor.lightGray, for: .disabled)
+        redoOutlet.setTitleColor(UIColor.lightGray, for: .disabled)
         
         // Prepare the example PDF document and PDF view
         let pdfDocument = PDFDocument(url: Bundle.main.url(forResource: "blank", withExtension: "pdf")!)
@@ -80,6 +91,8 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         
         // Set the initial state of the undo and redo buttons
         freedrawUndoStateChanged()
+        
+        updateButtonsState()
     }
     
     // This function will make sure you can control gestures aimed at UIButtons
@@ -110,21 +123,57 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
             redoOutlet.isEnabled = false
         }
     }
+    
+    func updateButtonsState() {
+        switch PDFFreedrawGestureRecognizer.inkType {
+        case .highlighter:
+            blueLineOutlet.isSelected = false
+            redHighlightOutlet.isSelected = true
+            eraserOutlet.isSelected = false
+            if pdfFreedraw.convertClosedCurvesToOvals {
+                perfectOvalsOutlet.isSelected = true
+            } else {
+                perfectOvalsOutlet.isSelected = false
+            }
+            perfectOvalsOutlet.isEnabled = true
+            
+        case .eraser:
+            blueLineOutlet.isSelected = false
+            redHighlightOutlet.isSelected = false
+            eraserOutlet.isSelected = true
+            perfectOvalsOutlet.isSelected = false
+            perfectOvalsOutlet.isEnabled = false
+            
+        default: // .pen
+            blueLineOutlet.isSelected = true
+            redHighlightOutlet.isSelected = false
+            eraserOutlet.isSelected = false
+            if pdfFreedraw.convertClosedCurvesToOvals {
+                perfectOvalsOutlet.isSelected = true
+            } else {
+                perfectOvalsOutlet.isSelected = false
+            }
+            perfectOvalsOutlet.isEnabled = true
+        }
+    }
 
     @IBAction func blueLineAction(_ sender: UIButton) {
         PDFFreedrawGestureRecognizer.color = UIColor.blue
         PDFFreedrawGestureRecognizer.width = 3
-        PDFFreedrawGestureRecognizer.type = .pen
+        PDFFreedrawGestureRecognizer.inkType = .pen
+        updateButtonsState()
     }
     
     @IBAction func redHighlightAction(_ sender: UIButton) {
         PDFFreedrawGestureRecognizer.color = UIColor.red
         PDFFreedrawGestureRecognizer.width = 20
-        PDFFreedrawGestureRecognizer.type = .highlighter
+        PDFFreedrawGestureRecognizer.inkType = .highlighter
+        updateButtonsState()
     }
     
     @IBAction func eraserAction(_ sender: UIButton) {
-        PDFFreedrawGestureRecognizer.type = .eraser
+        PDFFreedrawGestureRecognizer.inkType = .eraser
+        updateButtonsState()
     }
     
     @IBAction func undoAction(_ sender: UIButton) {
@@ -132,6 +181,10 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     }
     @IBAction func redoAction(_ sender: UIButton) {
         pdfFreedraw.redoAnnotation()
+    }
+    @IBAction func drawPerfectOvals(_ sender: UIButton) {
+        pdfFreedraw.convertClosedCurvesToOvals = !pdfFreedraw.convertClosedCurvesToOvals
+        updateButtonsState()
     }
     
 }
