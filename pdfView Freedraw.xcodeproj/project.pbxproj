@@ -20,6 +20,7 @@
 		E4736AA225331B520010622A /* libClippingBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4736AA025331B520010622A /* libClippingBezier.a */; };
 		E4736AA6253322EB0010622A /* ClippingBezier in Resources */ = {isa = PBXBuildFile; fileRef = E4736AA4253322EB0010622A /* ClippingBezier */; };
 		E4736AA7253322EB0010622A /* PerformanceBezier in Resources */ = {isa = PBXBuildFile; fileRef = E4736AA5253322EB0010622A /* PerformanceBezier */; };
+		E4736AAB253369380010622A /* FreedrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4736AAA253369380010622A /* FreedrawExtensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		E4736AA025331B520010622A /* libClippingBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libClippingBezier.a; sourceTree = "<group>"; };
 		E4736AA4253322EB0010622A /* ClippingBezier */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ClippingBezier; sourceTree = "<group>"; };
 		E4736AA5253322EB0010622A /* PerformanceBezier */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PerformanceBezier; sourceTree = "<group>"; };
+		E4736AAA253369380010622A /* FreedrawExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FreedrawExtensions.swift; sourceTree = "<group>"; };
 		E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Bridging-Header.h"; sourceTree = "<group>"; };
 		E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Prefix.pch"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -82,6 +84,7 @@
 				E435F04C2526F73900A3BEEE /* SceneDelegate.swift */,
 				E435F04E2526F73900A3BEEE /* ViewController.swift */,
 				E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */,
+				E4736AAA253369380010622A /* FreedrawExtensions.swift */,
 				E435F066252711E700A3BEEE /* UIBezierPath+.swift */,
 				E435F0502526F73900A3BEEE /* Main.storyboard */,
 				E435F0532526F73B00A3BEEE /* Assets.xcassets */,
@@ -184,6 +187,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E435F067252711E700A3BEEE /* UIBezierPath+.swift in Sources */,
+				E4736AAB253369380010622A /* FreedrawExtensions.swift in Sources */,
 				E435F04F2526F73900A3BEEE /* ViewController.swift in Sources */,
 				E435F04B2526F73900A3BEEE /* AppDelegate.swift in Sources */,
 				E435F0632526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift in Sources */,

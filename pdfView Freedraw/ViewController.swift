@@ -28,6 +28,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         perfectOvalsOutlet.tintColor = UIColor.darkGray
         undoOutlet.setTitleColor(UIColor.lightGray, for: .disabled)
         redoOutlet.setTitleColor(UIColor.lightGray, for: .disabled)
+        perfectOvalsOutlet.setTitleColor(UIColor.lightGray, for: .disabled)
         
         // Prepare the example PDF document and PDF view
         let pdfDocument = PDFDocument(url: Bundle.main.url(forResource: "blank", withExtension: "pdf")!)
