@@ -52,6 +52,8 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     private var currentPDFPage : PDFPage! // Safely unwrapped variable used for the current PDF page
     private var annotation : PDFAnnotation! // The annotation path we are actively drawing or deleting
     private var annotationBeingErasedPath = UIBezierPath() // An annotation we are actively erasing
+    private var erasedAnnotationPath = UIBezierPath()
+    private var annotationBeingErasedIndicator = false
     private var originalAnnotationColor : UIColor! // Used to track the active PDF annotation color when it is hidden during the erasing process
     // Undo manager variables
     private var annotationsToUndo : [(PDFAnnotation, FreedrawType)] = []
@@ -128,6 +130,8 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         }
     }
     
+    // MARK: Touches Moved
+    
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         if !passedSafetyChecks {
             return
@@ -177,7 +181,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 
                 // Erase annotation if in eraser mode
                 if PDFFreedrawGestureRecognizer.inkType == .eraser {
-                    self.erase(rect: rect, pointInPage: convertedPoint, currentPDFPath: self.signingPath, currentUIViewPath: self.viewPath, calledFromTouchesEnded: false)
+                    self.erase(rect: rect, pointInPage: convertedPoint, currentPDFPath: self.signingPath, currentUIViewPath: self.viewPath)
                 } else {
                     
                     // Clear any remaining CAShapeLayer from the drawVeil. We cannot use the helper function here, because two DispatchQueues create a race condition.
@@ -227,6 +231,10 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 self.totalDistance += sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
                 if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
                     self.signingPath.removeAllPoints() // Prevent a short line when accessed from long tap
+                    self.viewPath.removeAllPoints()
+                    // Remove the UIView for the CAShapeLayer
+                    self.removeDrawVeil()
+                    return
                 }
                 
                 // Get the current gesture location
@@ -261,7 +269,8 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 
                 // Eraser
                 if PDFFreedrawGestureRecognizer.inkType == .eraser {
-                    self.erase(rect: rect, pointInPage: convertedPoint, currentPDFPath: self.signingPath, currentUIViewPath: self.viewPath, calledFromTouchesEnded: true)
+                    self.erase(rect: rect, pointInPage: convertedPoint, currentPDFPath: self.signingPath, currentUIViewPath: self.viewPath)
+                    self.drawErasedAnnotation(currentPDFPath: self.signingPath)
                     // Remove the UIView for the CAShapeLayer
                     for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
                         drawVeilSubview.removeFromSuperview()
@@ -295,14 +304,14 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     // Record the annotation type at a convenient metadata field
                     self.annotation.userName = "\(PDFFreedrawGestureRecognizer.inkType)"
                     self.currentPDFPage.addAnnotation(self.annotation)
-                    self.registerUndo()
+                    self.registerUndo(annotation: self.annotation, inkType: PDFFreedrawGestureRecognizer.inkType)
                     
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
                     self.viewPath.removeAllPoints()
                     
                     // Make sure the annotation is nil
-                    self.annotation = nil
+                    //self.annotation = nil
                 }
             }
         }
@@ -311,9 +320,17 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     // MARK: Undo Manager
     
     /// Function that registers the last annotation action in the undo history
-    public func registerUndo() {
-        annotationsToUndo.append((annotation, PDFFreedrawGestureRecognizer.inkType))
-        if annotationsToUndo.count > maxUndoNumber {
+    public func registerUndo(annotation: PDFAnnotation, inkType: FreedrawType) {
+        annotationsToUndo.append((annotation, inkType))
+        var counter = 0
+        for annotation in annotationsToUndo {
+            if annotation.1 == .eraser {
+                counter += 2
+            } else {
+                counter += 1
+            }
+        }
+        if counter > maxUndoNumber * 2 {
             annotationsToUndo.removeFirst()
         }
         updateUndoRedoState()
@@ -384,7 +401,8 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     // MARK: Eraser
     
-    private func erase(rect: CGRect, pointInPage: CGPoint, currentPDFPath: UIBezierPath, currentUIViewPath: UIBezierPath, calledFromTouchesEnded: Bool) {
+    var annotationBeingErased : PDFAnnotation?
+    private func erase(rect: CGRect, pointInPage: CGPoint, currentPDFPath: UIBezierPath, currentUIViewPath: UIBezierPath) {
         let annotations = currentPDFPage.annotations
         guard annotations.count > 0 else { return }
         for annotation in annotations {
@@ -396,139 +414,163 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             
             // Deal with non-ink annotations by simply erasing them
             if annotation.type != "Ink" {
-                
-                guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
                 currentPDFPage.removeAnnotation(annotation)
                 continue
             }
             
-            // Check if our class annotation variable is non-nil, and different than the one we just detected. If it is, then it is time to split the PDF annotation path on the PDF page and remove its intersection with the eraser. This is also necessary if we just lifted our finger.
-            if self.annotation != nil && (self.annotation == annotation || calledFromTouchesEnded) {
+            // Check if our class annotation variable is non-nil, and different than the one we just detected. If it is, then it is time to split the PDF annotation path on the PDF page and remove its intersection with the eraser. This is also necessary if we just lifted our finger, but it is dealt with in a separate function, because of our need to keep this phase and the following one in the same DispatchQueue block.
+            DispatchQueue.main.async {
+//                if self.annotation != nil && self.annotation != annotation && !self.erasedAnnotationPath.isEmpty {
+                if self.annotation != nil && self.annotation != annotation && !self.annotationBeingErasedPath.isEmpty {
+                    
+                    // ToDo: if self.erasedAnnotationPath is empty, just delete the whole thing
+                    
+                    let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
+                    erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
+                    _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
+                    
+                    self.annotationBeingErasedPath.removeAllPoints()
+                    var replacementAnnotation = PDFAnnotation()
+                    if let originalAnnotationCopy = self.annotation.copy() as? PDFAnnotation {
+                        originalAnnotationCopy.color = self.originalAnnotationColor
+                        var inkTypeToRecord : FreedrawType = .pen
+                        switch originalAnnotationCopy.userName {
+                        case "highlighter":
+                            inkTypeToRecord = .highlighter
+                        default:
+                            inkTypeToRecord = .pen
+                        }
+                        self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
+                        
+                        // Add the replacement annotation
+                        replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
+                        replacementAnnotation.add(erasedPath)
+                        replacementAnnotation.border = originalAnnotationCopy.border
+                        replacementAnnotation.color = originalAnnotationCopy.color
+                        replacementAnnotation.userName = "\(inkTypeToRecord)"
+                        self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
+                    
+                        // Remove the original annotation from the page
+                        self.currentPDFPage.removeAnnotation(self.annotation)
+                        self.currentPDFPage.addAnnotation(replacementAnnotation)
+
+                        // Remove the CAShapeLayer
+                        if self.drawVeil.layer.sublayers != nil {
+                            for layer in self.drawVeil.layer.sublayers! {
+                                layer.removeFromSuperlayer()
+                            }
+                        }
+                    }
+                }
+            
+                // If we got here, this means we have already saved any previously-dealt-with erased annotations to the PDF page, and it is time to start erasing a new one.
+                // First, if this is the first time we are encountering this annotation (the class variable is nil), let's translate its path to the UIView coordinates.
+                if self.annotationBeingErasedPath.isEmpty {
+                    // Read the original annotation path, unwrap it, assign it to the class variable
+                    if let annotationPathUnwrapped = annotation.paths?.first {
+                        self.annotationBeingErasedPath = annotationPathUnwrapped.copy() as! UIBezierPath
+                    //} else { continue }
+
+                        // Get annotation rect origin, converted to UIView coordinates
+                        let origin = self.pdfView.superview!.convert(annotation.bounds.origin, from: self.pdfView)
+                        // Get the PDF page bounds, converted to UIView coordinates
+                        let pdfPageBounds = self.pdfView.convert(self.currentPDFPage.bounds(for: .cropBox), from: self.currentPDFPage)
+                        // Apply transformations to the annotation path from PDF coordinates to UIView coordinates
+                        self.annotationBeingErasedPath.apply(CGAffineTransform(scaleX: self.pdfView.scaleFactor, y: -self.pdfView.scaleFactor))
+                        self.annotationBeingErasedPath.apply(CGAffineTransform(translationX: origin.x*self.pdfView.scaleFactor + pdfPageBounds.minX, y: self.pdfView.bounds.height - pdfPageBounds.minY - origin.y*self.pdfView.scaleFactor))
+                        
+                        // Set the class variable for the annotation, so we don't do this again until we are dealing with a different annotation
+                        
+                        //print ("2")
+                        self.annotation = annotation
+                        
+                        // Record its color, because we are about to hide it for the duration of drawing on the CAShapeLayer
+                        self.originalAnnotationColor = annotation.color
+                    }
+                }
                 
-//                // Fatten the eraser and stroke its path, so that we can detect the intersection
-//                let eraserPath = UIBezierPath(cgPath: currentPDFPath.cgPath.copy(strokingWithWidth: 40.0/pdfView.scaleFactor, lineCap: .round, lineJoin: .round, miterLimit: 0))
-//
-//                // Define our annotation path
-//                let annotationPath = self.annotation.paths!.first!
-//                //let annotationPath = UIBezierPath(cgPath: self.annotation.paths!.first!.cgPath.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0))
-//                // Get annotation rect origin
-//                let origin = annotation.bounds.origin
-//                // Get the PDF page bounds, converted to UIView coordinates
-//                let pdfPageBounds = currentPDFPage.bounds(for: .cropBox)
-//                // Apply transformations to the annotation path from PDF coordinates to UIView coordinates
-//                //annotationBeingErasedPath.apply(CGAffineTransform(scaleX: pdfView.scaleFactor, y: -pdfView.scaleFactor))
-//                annotationPath.apply(CGAffineTransform(translationX: origin.x + pdfPageBounds.minX, y: pdfView.bounds.height - pdfPageBounds.minY - origin.y))
-//
-//                // Use Clipping Bezier to calculate the difference between the annotation and the eraser
-//                let erasedAnnotationPaths = eraserPath.difference(with: annotationPath)
-//                print (erasedAnnotationPaths)
-//                if erasedAnnotationPaths?.count ?? 0 == 0 { return }
-//                let erasedAnnotationPath = erasedAnnotationPaths!.first!
-//
-//                DispatchQueue.main.async {
-//                    // Remove the original annotation from the page
-//                    self.currentPDFPage.removeAnnotation(self.annotation)
-//                    // Restore its color
-//                    self.annotation.color = self.originalAnnotationColor
-//                    // Clear the stored color
-//                    self.originalAnnotationColor = UIColor.clear
-//                    // Manually add this annotation to the undo stack
-//                    var inkTypeToRecord : FreedrawType = .pen
-//                    switch self.annotation.userName {
-//                    case "highlighter":
-//                        inkTypeToRecord = .highlighter
-//                    default:
-//                        inkTypeToRecord = .pen
-//                    }
-//                    self.annotationsToUndo.append((annotation, inkTypeToRecord))
-//
-//                    // Add the replacement annotation
-//                    let replacementAnnotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
-//                    _ = erasedAnnotationPath.moveCenter(to: rect.center)
-//                    replacementAnnotation.add(erasedAnnotationPath)
-//                    replacementAnnotation.border = self.annotation.border
-//                    replacementAnnotation.color = self.annotation.color
-//                    self.currentPDFPage.addAnnotation(replacementAnnotation)
-//
-//                    // Make the class annotation into the replacement annotation, for the sake of undo registration
-//                    self.annotation = replacementAnnotation
-//                    self.registerUndo()
-//
-//                    // Make the class annotation nil
-//                    self.annotation = nil
-//
-//                    // Remove the CAShapeLayer
-//                    if self.drawVeil.layer.sublayers != nil {
-//                        for layer in self.drawVeil.layer.sublayers! {
-//                            layer.removeFromSuperlayer()
-//                        }
-//                    }
-//
-//                    return
-//                }
+                // The previous block is only called once per annotation. The current path is updated every time this function is called. Let's get the difference between them. The Clipping Bezier library will handle that calculation.
+            
+                // Fatten the eraser and stroke its path, so that we can detect the intersection
+                let eraserPath = UIBezierPath(cgPath: currentUIViewPath.cgPath.copy(strokingWithWidth: 20.0, lineCap: .round, lineJoin: .round, miterLimit: 0))
+                let erasedAnnotationPaths = self.annotationBeingErasedPath.difference(with: eraserPath)
+
+                for i in 0..<(erasedAnnotationPaths?.count ?? 0) {
+                    self.erasedAnnotationPath.removeAllPoints()
+                    self.erasedAnnotationPath = erasedAnnotationPaths![i]
+                    
+                    // Draw temporary annotation on screen using a CAShapeLayer, to be replaced later with the PDFAnnotation
+                    
+                    // First, clear any existing layers
+                    if self.drawVeil.layer.sublayers != nil {
+                        for layer in self.drawVeil.layer.sublayers! {
+                            layer.removeFromSuperlayer()
+                        }
+                    }
+                    
+                    // Time to draw
+                    let viewPathLayer = CAShapeLayer()
+                    viewPathLayer.strokeColor = self.originalAnnotationColor.cgColor
+                    viewPathLayer.lineWidth = CGFloat((self.annotation.border?.lineWidth ?? PDFFreedrawGestureRecognizer.width) * self.pdfView.scaleFactor)
+                    viewPathLayer.path = self.erasedAnnotationPath.cgPath
+                    viewPathLayer.fillColor = UIColor.clear.cgColor
+                    viewPathLayer.lineJoin = CAShapeLayerLineJoin.round
+                    viewPathLayer.lineCap = CAShapeLayerLineCap.round
+
+                    self.drawVeil.layer.addSublayer(viewPathLayer)
+                    
+                }
+
+                // Hide the original annotation if it is not already hidden
+                if self.annotation.color != UIColor.clear {
+                    self.annotation.color = UIColor.clear
+                }
+            }
+        }
+    }
     
-                self.annotation = nil
-                print ("3")
-                continue
-            }
-            
-            // If we got here, this means we have already saved any previously-dealt-with erased annotations to the PDF page, and it is time to start erasing a new one.
-            // First, if this is the first time we are encountering this annotation (the class variable is nil), let's translate its path to the UIView coordinates.
-            if self.annotation == nil {
-                print ("1")
-                // Read the original annotation path, unwrap it, assign it to the class variable
-                if let annotationPathUnwrapped = annotation.paths?.first {
-                    annotationBeingErasedPath = annotationPathUnwrapped
-                } else { continue }
-                // Get annotation rect origin, converted to UIView coordinates
-                let origin = pdfView.superview!.convert(annotation.bounds.origin, from: pdfView)
-                // Get the PDF page bounds, converted to UIView coordinates
-                let pdfPageBounds = pdfView.convert(currentPDFPage.bounds(for: .cropBox), from: currentPDFPage)
-                // Apply transformations to the annotation path from PDF coordinates to UIView coordinates
-                annotationBeingErasedPath.apply(CGAffineTransform(scaleX: pdfView.scaleFactor, y: -pdfView.scaleFactor))
-                annotationBeingErasedPath.apply(CGAffineTransform(translationX: origin.x*pdfView.scaleFactor + pdfPageBounds.minX, y: pdfView.bounds.height - pdfPageBounds.minY - origin.y*pdfView.scaleFactor))
-                
-                // Set the class variable for the annotation, so we don't do this again until we are dealing with a different annotation
-                self.annotation = annotation
-                
-                // Record its color, because we are about to hide it for the duration of drawing on the CAShapeLayer
-                self.originalAnnotationColor = annotation.color
-            }
-            
-            // The previous block is only called once per annotation. The current path is updated every time this function is called. Let's get the difference between them. The Clipping Bezier library will handle that calculation.
+    private func drawErasedAnnotation(currentPDFPath: UIBezierPath) {
+        //if self.erasedAnnotationPath.isEmpty { return }
         
-            // Fatten the eraser and stroke its path, so that we can detect the intersection
-            let eraserPath = UIBezierPath(cgPath: currentUIViewPath.cgPath.copy(strokingWithWidth: 40.0, lineCap: .round, lineJoin: .round, miterLimit: 0))
-            let erasedAnnotationPaths = annotationBeingErasedPath.difference(with: eraserPath)
-            if erasedAnnotationPaths?.count ?? 0 == 0 { continue }
-            let erasedAnnotationPath = erasedAnnotationPaths!.first!
+        DispatchQueue.main.async {
+            let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
+            erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
+            _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
             
-            // Draw temporary annotation on screen using a CAShapeLayer, to be replaced later with the PDFAnnotation
-            //DispatchQueue.main.async {
+            
+            self.annotationBeingErasedPath.removeAllPoints()
+            var replacementAnnotation = PDFAnnotation()
+            if let originalAnnotationCopy = self.annotation.copy() as? PDFAnnotation {
+                originalAnnotationCopy.color = self.originalAnnotationColor
+                var inkTypeToRecord : FreedrawType = .pen
+                switch originalAnnotationCopy.userName {
+                case "highlighter":
+                    inkTypeToRecord = .highlighter
+                default:
+                    inkTypeToRecord = .pen
+                }
+                self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
                 
-                // First, clear any existing layers
+                // Add the replacement annotation
+                replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
+                replacementAnnotation.add(erasedPath)
+                replacementAnnotation.border = originalAnnotationCopy.border
+                replacementAnnotation.color = originalAnnotationCopy.color
+                replacementAnnotation.userName = "\(inkTypeToRecord)"
+                self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
+            
+                // Remove the original annotation from the page
+                self.currentPDFPage.removeAnnotation(self.annotation)
+
+                self.currentPDFPage.addAnnotation(replacementAnnotation)
+
+                // Remove the CAShapeLayer
                 if self.drawVeil.layer.sublayers != nil {
                     for layer in self.drawVeil.layer.sublayers! {
                         layer.removeFromSuperlayer()
                     }
                 }
-                
-                // Time to draw
-                let viewPathLayer = CAShapeLayer()
-                viewPathLayer.strokeColor = self.originalAnnotationColor.cgColor
-                viewPathLayer.lineWidth = CGFloat((self.annotation.border?.lineWidth ?? PDFFreedrawGestureRecognizer.width) * self.pdfView.scaleFactor)
-                viewPathLayer.path = erasedAnnotationPath.cgPath
-                viewPathLayer.fillColor = UIColor.clear.cgColor
-                viewPathLayer.lineJoin = CAShapeLayerLineJoin.round
-                viewPathLayer.lineCap = CAShapeLayerLineCap.round
-
-                self.drawVeil.layer.addSublayer(viewPathLayer)
-                
-                // Hide the original annotation if it is not already hidden
-                if self.annotation.color != UIColor.clear {
-                    self.annotation.color = UIColor.red
-                }
-            //}
+            }
         }
     }
     
@@ -551,5 +593,28 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 drawVeilSubview.removeFromSuperview()
             }
         }
+    }
+    
+    private func eraserTest(annotation: PDFAnnotation, pointInPage: CGPoint) -> Bool {
+        //guard (annotation.paths?.count ?? 0) > 0 else { return false }
+        //let boundingRectOrigin = self.pdfView!.convert(CGPoint(x:annotation.bounds.origin.x, y:annotation.bounds.minY), from: pdfView!)
+        let boundingRectOrigin = self.pdfView!.superview!.convert(annotation.bounds.origin, from: pdfView!)
+        if let translatedPath = translate(path: annotation.paths!.first!.cgPath, by: boundingRectOrigin)?.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0) {
+            if translatedPath.contains(pointInPage) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    private func translate(path : CGPath?, by point: CGPoint) -> CGPath? {
+        let bezeirPath = UIBezierPath()
+        guard let prevPath = path else {
+            return nil
+        }
+        bezeirPath.cgPath = prevPath
+        bezeirPath.apply(CGAffineTransform(translationX: point.x, y: point.y))
+
+        return bezeirPath.cgPath
     }
 }

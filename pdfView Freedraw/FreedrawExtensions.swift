@@ -10,12 +10,12 @@ import PDFKit
 
 extension UIBezierPath {
     
-    /// Creates and returns a new Bézier path object with an inscribed oval path in the specified rectangle, without closing the path.
-    convenience init (openOvalIn rect: CGRect) {
-        self.init()
-        let initialOval = UIBezierPath(ovalIn: rect)
+    /// Extracts all of the path elements, their points and their control points. Expect types are the strings `"move"`, `"addLine"`, `"addQuadCurve"` and `"addCurve"`.
+    func getPathElements() -> [(type: String?, point: CGPoint?, controlPoint: CGPoint?, controlPoint1: CGPoint?, controlPoint2: CGPoint?)] {
+        
+        let initialPath = UIBezierPath(cgPath: self.cgPath)
         var bezierPoints = NSMutableArray()
-        initialOval.cgPath.apply(info: &bezierPoints, function: { info, element in
+        initialPath.cgPath.apply(info: &bezierPoints, function: { info, element in
 
                 guard let resultingPoints = info?.assumingMemoryBound(to: NSMutableArray.self) else {
                     return
@@ -54,18 +54,58 @@ extension UIBezierPath {
         let elementsCGFloats : [[CGFloat]] = bezierPoints.compactMap { $0 as? [CGFloat] }
         var elementsCGPoints : [CGPoint] = elementsCGFloats.map { CGPoint(x: $0[0], y: $0[1]) }
         
+        var returnValue : [(type: String?, point: CGPoint?, controlPoint: CGPoint?, controlPoint1: CGPoint?, controlPoint2: CGPoint?)] = []
         for i in 0..<elementsTypes.count {
             switch elementsTypes[i] {
             case "move":
-                self.move(to: elementsCGPoints.removeFirst())
+                returnValue.append((type: "move", point: elementsCGPoints.removeFirst(), controlPoint: nil, controlPoint1: nil, controlPoint2: nil))
+            case "addLine":
+                returnValue.append((type: "addLine", point: elementsCGPoints.removeFirst(), controlPoint: nil, controlPoint1: nil, controlPoint2: nil))
+            case "addQuadCurve":
+                let controlPoint = elementsCGPoints.removeFirst()
+                returnValue.append((type: "addQuadCurve", point: elementsCGPoints.removeFirst(), controlPoint: controlPoint, controlPoint1: nil, controlPoint2: nil))
             case "addCurve":
                 let controlPoint1 = elementsCGPoints.removeFirst()
                 let controlPoint2 = elementsCGPoints.removeFirst()
-                let point = elementsCGPoints.removeFirst()
-                self.addCurve(to: point, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
+                returnValue.append((type: "addCurve", point: elementsCGPoints.removeFirst(), controlPoint: nil, controlPoint1: controlPoint1, controlPoint2: controlPoint2))
             default:
+                returnValue.append((type: nil, point: nil, controlPoint: nil, controlPoint1: nil, controlPoint2: nil))
+            }
+        }
+        return returnValue
+    }
+    
+    /// Creates and returns a new Bézier path object with an inscribed oval path in the specified rectangle, without closing the path.
+    convenience init (openOvalIn rect: CGRect) {
+        self.init()
+        let initialOval = UIBezierPath(ovalIn: rect)
+        let points = initialOval.getPathElements()
+        var success = true
+        for i in 0..<points.count {
+            switch points[i].type {
+            case "move":
+                if points[i].point != nil {
+                    self.move(to: points[i].point!)
+                } else {
+                    success = false
+                    break
+                }
+            case "addCurve":
+                if let controlPoint1 = points[i].controlPoint1,
+                   let controlPoint2 = points[i].controlPoint2,
+                   let point = points[i].point {
+                    self.addCurve(to: point, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
+                } else {
+                    success = false
+                    break
+                }
+            default:
+                success = false
                 break
             }
+        }
+        if !success {
+            cgPath = initialOval.cgPath
         }
     }
     
