@@ -272,9 +272,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.erase(rect: rect, pointInPage: convertedPoint, currentPDFPath: self.signingPath, currentUIViewPath: self.viewPath)
                     self.drawErasedAnnotation(currentPDFPath: self.signingPath)
                     // Remove the UIView for the CAShapeLayer
-                    for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
-                        drawVeilSubview.removeFromSuperview()
-                    }
+//                    for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
+//                        drawVeilSubview.removeFromSuperview()
+//                    }
                     self.viewPath.removeAllPoints()
 
                 } else {
@@ -320,8 +320,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     // MARK: Undo Manager
     
     /// Function that registers the last annotation action in the undo history
-    public func registerUndo(annotation: PDFAnnotation, inkType: FreedrawType) {
-        annotationsToUndo.append((annotation, inkType))
+    public func registerUndo(annotation: PDFAnnotation?, inkType: FreedrawType) {
+        guard annotation != nil else { return }
+        annotationsToUndo.append((annotation!, inkType))
         var counter = 0
         for annotation in annotationsToUndo {
             if annotation.1 == .eraser {
@@ -410,11 +411,15 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             guard annotation.bounds.intersects(rect) else { continue }
             
             // Test a specific hit test for the point of intersection. More expensive.
-            guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
+            //guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
             
             // Deal with non-ink annotations by simply erasing them
             if annotation.type != "Ink" {
+                // Test a specific hit test for the point of intersection. More expensive.
+                guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
+                // Remove the annotation
                 currentPDFPage.removeAnnotation(annotation)
+                // ToDo - Undo Manager
                 continue
             }
             
@@ -423,42 +428,45 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
 //                if self.annotation != nil && self.annotation != annotation && !self.erasedAnnotationPath.isEmpty {
                 if self.annotation != nil && self.annotation != annotation && !self.annotationBeingErasedPath.isEmpty {
                     
-                    // ToDo: if self.erasedAnnotationPath is empty, just delete the whole thing
-                    
+                    var replacementAnnotation : PDFAnnotation?
                     let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
-                    erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
-                    _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
+                    if !erasedPath.isEmpty {
+                        erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
+                        _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
                     
-                    self.annotationBeingErasedPath.removeAllPoints()
-                    var replacementAnnotation = PDFAnnotation()
-                    if let originalAnnotationCopy = self.annotation.copy() as? PDFAnnotation {
-                        originalAnnotationCopy.color = self.originalAnnotationColor
-                        var inkTypeToRecord : FreedrawType = .pen
-                        switch originalAnnotationCopy.userName {
-                        case "highlighter":
-                            inkTypeToRecord = .highlighter
-                        default:
-                            inkTypeToRecord = .pen
-                        }
-                        self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
-                        
-                        // Add the replacement annotation
-                        replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
-                        replacementAnnotation.add(erasedPath)
-                        replacementAnnotation.border = originalAnnotationCopy.border
-                        replacementAnnotation.color = originalAnnotationCopy.color
-                        replacementAnnotation.userName = "\(inkTypeToRecord)"
-                        self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
-                    
-                        // Remove the original annotation from the page
-                        self.currentPDFPage.removeAnnotation(self.annotation)
-                        self.currentPDFPage.addAnnotation(replacementAnnotation)
-
-                        // Remove the CAShapeLayer
-                        if self.drawVeil.layer.sublayers != nil {
-                            for layer in self.drawVeil.layer.sublayers! {
-                                layer.removeFromSuperlayer()
+                        if let originalAnnotationCopy = self.annotation.copy() as? PDFAnnotation {
+                            originalAnnotationCopy.color = self.originalAnnotationColor
+                            var inkTypeToRecord : FreedrawType = .pen
+                            switch originalAnnotationCopy.userName {
+                            case "highlighter":
+                                inkTypeToRecord = .highlighter
+                            default:
+                                inkTypeToRecord = .pen
                             }
+                            self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
+                            
+                            // Add the replacement annotation
+                            replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
+                            replacementAnnotation?.add(erasedPath)
+                            replacementAnnotation?.border = originalAnnotationCopy.border
+                            replacementAnnotation?.color = originalAnnotationCopy.color
+                            replacementAnnotation?.userName = "\(inkTypeToRecord)"
+                            self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
+                        }
+                    }
+                    // Remove the original annotation from the page
+                    self.currentPDFPage.removeAnnotation(self.annotation)
+                    // ToDo - move the registerUndo here and check above
+                    if !erasedPath.isEmpty && replacementAnnotation != nil {
+                        self.currentPDFPage.addAnnotation(replacementAnnotation!)
+                        // ToDo - undo manager here and check above
+                    }
+                    self.annotationBeingErasedPath.removeAllPoints()
+                        
+                    // Remove the CAShapeLayer
+                    if self.drawVeil.layer.sublayers != nil {
+                        for layer in self.drawVeil.layer.sublayers! {
+                            layer.removeFromSuperlayer()
                         }
                     }
                 }
@@ -533,42 +541,46 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         //if self.erasedAnnotationPath.isEmpty { return }
         
         DispatchQueue.main.async {
+            var replacementAnnotation : PDFAnnotation?
             let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
-            erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
-            _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
+            if !erasedPath.isEmpty {
+                erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
+                _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
             
-            
-            self.annotationBeingErasedPath.removeAllPoints()
-            var replacementAnnotation = PDFAnnotation()
-            if let originalAnnotationCopy = self.annotation.copy() as? PDFAnnotation {
-                originalAnnotationCopy.color = self.originalAnnotationColor
-                var inkTypeToRecord : FreedrawType = .pen
-                switch originalAnnotationCopy.userName {
-                case "highlighter":
-                    inkTypeToRecord = .highlighter
-                default:
-                    inkTypeToRecord = .pen
-                }
-                self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
-                
-                // Add the replacement annotation
-                replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
-                replacementAnnotation.add(erasedPath)
-                replacementAnnotation.border = originalAnnotationCopy.border
-                replacementAnnotation.color = originalAnnotationCopy.color
-                replacementAnnotation.userName = "\(inkTypeToRecord)"
-                self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
-            
-                // Remove the original annotation from the page
-                self.currentPDFPage.removeAnnotation(self.annotation)
-
-                self.currentPDFPage.addAnnotation(replacementAnnotation)
-
-                // Remove the CAShapeLayer
-                if self.drawVeil.layer.sublayers != nil {
-                    for layer in self.drawVeil.layer.sublayers! {
-                        layer.removeFromSuperlayer()
+                if let originalAnnotationCopy = self.annotation.copy() as? PDFAnnotation {
+                    originalAnnotationCopy.color = self.originalAnnotationColor
+                    var inkTypeToRecord : FreedrawType = .pen
+                    switch originalAnnotationCopy.userName {
+                    case "highlighter":
+                        inkTypeToRecord = .highlighter
+                    default:
+                        inkTypeToRecord = .pen
                     }
+                    self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
+                    
+                    // Add the replacement annotation
+                    replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
+                    replacementAnnotation?.add(erasedPath)
+                    replacementAnnotation?.border = originalAnnotationCopy.border
+                    replacementAnnotation?.color = originalAnnotationCopy.color
+                    replacementAnnotation?.userName = "\(inkTypeToRecord)"
+                    self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
+                }
+            }
+            
+            // Remove the original annotation from the page
+            self.currentPDFPage.removeAnnotation(self.annotation)
+            
+            if !erasedPath.isEmpty && replacementAnnotation != nil {
+                self.currentPDFPage.addAnnotation(replacementAnnotation!)
+                // ToDo - undo manager here and check above
+            }
+            self.annotationBeingErasedPath.removeAllPoints()
+                
+            // Remove the CAShapeLayer
+            if self.drawVeil.layer.sublayers != nil {
+                for layer in self.drawVeil.layer.sublayers! {
+                    layer.removeFromSuperlayer()
                 }
             }
         }
