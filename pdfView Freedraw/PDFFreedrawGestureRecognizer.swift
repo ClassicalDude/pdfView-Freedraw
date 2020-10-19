@@ -411,12 +411,10 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             guard annotation.bounds.intersects(rect) else { continue }
             
             // Test a specific hit test for the point of intersection. More expensive.
-            //guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
+            guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
             
             // Deal with non-ink annotations by simply erasing them
             if annotation.type != "Ink" {
-                // Test a specific hit test for the point of intersection. More expensive.
-                guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
                 // Remove the annotation
                 currentPDFPage.removeAnnotation(annotation)
                 // ToDo - Undo Manager
