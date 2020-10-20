@@ -37,18 +37,19 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
             
             pdfView.frame = self.view.frame
             self.view.addSubview(pdfView)
-            self.view.sendSubviewToBack(pdfView)
+            self.view.sendSubviewToBack(pdfView) // Allow the UIButtons to be on top
             
             // The following block adjusts the view and its contents in an optimal way for display and annotation
             
             // First - a few useful options, now commented out
-            pdfView.displayMode = .singlePage
-            pdfView.displayDirection = .horizontal
-            pdfView.usePageViewController(false, withViewOptions: [:])
-            pdfView.translatesAutoresizingMaskIntoConstraints = true
-            pdfView.contentMode = .scaleAspectFit
+//            pdfView.displayMode = .singlePage
+//            pdfView.displayDirection = .horizontal
+//            pdfView.usePageViewController(false, withViewOptions: [:])
+//            pdfView.translatesAutoresizingMaskIntoConstraints = true
+//            pdfView.contentMode = .scaleAspectFit
             
-            // From here - options that should probably be set
+            // From here - options that should probably be set, and by this order, including the repeats
+            // This ensures the proper scaling of the PDF page
             pdfView.autoresizesSubviews = true
             pdfView.autoresizingMask = [.flexibleWidth, .flexibleHeight, .flexibleTopMargin, .flexibleLeftMargin]
             pdfView.minScaleFactor = pdfView.scaleFactorForSizeToFit
@@ -74,11 +75,15 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         
         // Define the gesture recognizer. You can use a default initializer for a narrow red pen
         pdfFreedraw = PDFFreedrawGestureRecognizer(color: UIColor.blue, width: 3, type: .pen)
-        pdfFreedraw.delegate = self
-        pdfFreedraw.undoDelegate = self
+        pdfFreedraw.delegate = self // This is for the UIGestureRecognizer delegate
+        pdfFreedraw.undoDelegate = self // This is for undo history notifications, to inform button states
         
         // Set the allowed number of undo actions
+        // Choosing the number 0 will take off that limit, for as long as the class instance is allocated
         pdfFreedraw.maxUndoNumber = 5
+        
+        // Choose whether ink annotations will be erased as a whole, or by splitting their UIBezierPaths. The second option provides a more intuitive UX, but may have unpredictable results at times.
+        pdfFreedraw.eraseInkBySplittingPaths = true
         
         // Set the pdfView's isUserInteractionEnabled property to false, otherwise you'll end up swiping pages instead of drawing. This is also one of the conditions used by the PDFFreeDrawGestureRecognizer to execute, so you can use it to turn free drawing on and off.
         pdfView.isUserInteractionEnabled = false
@@ -92,7 +97,6 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         
         // Set the initial state of the undo and redo buttons
         freedrawUndoStateChanged()
-        
         updateButtonsState()
     }
     
@@ -126,7 +130,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     }
     
     func updateButtonsState() {
-        switch PDFFreedrawGestureRecognizer.inkType {
+        switch pdfFreedraw.inkType {
         case .highlighter:
             blueLineOutlet.isSelected = false
             redHighlightOutlet.isSelected = true
@@ -159,21 +163,21 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     }
 
     @IBAction func blueLineAction(_ sender: UIButton) {
-        PDFFreedrawGestureRecognizer.color = UIColor.blue
-        PDFFreedrawGestureRecognizer.width = 3
-        PDFFreedrawGestureRecognizer.inkType = .pen
+        pdfFreedraw.color = UIColor.blue
+        pdfFreedraw.width = 3
+        pdfFreedraw.inkType = .pen
         updateButtonsState()
     }
     
     @IBAction func redHighlightAction(_ sender: UIButton) {
-        PDFFreedrawGestureRecognizer.color = UIColor.red
-        PDFFreedrawGestureRecognizer.width = 20
-        PDFFreedrawGestureRecognizer.inkType = .highlighter
+        pdfFreedraw.color = UIColor.red
+        pdfFreedraw.width = 20
+        pdfFreedraw.inkType = .highlighter
         updateButtonsState()
     }
     
     @IBAction func eraserAction(_ sender: UIButton) {
-        PDFFreedrawGestureRecognizer.inkType = .eraser
+        pdfFreedraw.inkType = .eraser
         updateButtonsState()
     }
     
