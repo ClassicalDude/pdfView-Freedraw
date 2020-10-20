@@ -56,8 +56,8 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     private var annotationBeingErasedIndicator = false
     private var originalAnnotationColor : UIColor! // Used to track the active PDF annotation color when it is hidden during the erasing process
     // Undo manager variables
-    private var annotationsToUndo : [(PDFAnnotation, FreedrawType)] = []
-    private var annotationsToRedo : [(PDFAnnotation, FreedrawType)] = []
+    private var annotationsToUndo : [[PDFAnnotation]] = []
+    private var annotationsToRedo : [[PDFAnnotation]] = []
     
     convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
         PDFFreedrawGestureRecognizer.color = color ?? UIColor.red
@@ -304,7 +304,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     // Record the annotation type at a convenient metadata field
                     self.annotation.userName = "\(PDFFreedrawGestureRecognizer.inkType)"
                     self.currentPDFPage.addAnnotation(self.annotation)
-                    self.registerUndo(annotation: self.annotation, inkType: PDFFreedrawGestureRecognizer.inkType)
+                    self.registerUndo(annotations: [self.annotation])
                     
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
@@ -320,18 +320,11 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     // MARK: Undo Manager
     
     /// Function that registers the last annotation action in the undo history
-    public func registerUndo(annotation: PDFAnnotation?, inkType: FreedrawType) {
-        guard annotation != nil else { return }
-        annotationsToUndo.append((annotation!, inkType))
-        var counter = 0
-        for annotation in annotationsToUndo {
-            if annotation.1 == .eraser {
-                counter += 2
-            } else {
-                counter += 1
-            }
-        }
-        if counter > maxUndoNumber * 2 {
+    public func registerUndo(annotations: [PDFAnnotation]?) {
+        guard annotations != nil else { return }
+        annotationsToUndo.append(annotations!)
+        
+        if annotationsToUndo.count > maxUndoNumber && maxUndoNumber != 0 {
             annotationsToUndo.removeFirst()
         }
         updateUndoRedoState()
@@ -368,35 +361,29 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     /// Undo annotations by order of creation, up to the number set by `maxUndoNumber`
     public func undoAnnotation() {
-        let annotationToRemove = annotationsToUndo.popLast()
-        guard annotationToRemove != nil else { return }
-        if annotationToRemove?.1 != .eraser {
-            DispatchQueue.main.async {
-                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.removeAnnotation((annotationToRemove?.0)!)
-            }
-        } else {
-            DispatchQueue.main.async {
-                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation((annotationToRemove?.0)!)
+        let lastAnnotation = annotationsToUndo.popLast()
+        guard lastAnnotation != nil else { return }
+        DispatchQueue.main.async {
+            self.currentPDFPage.removeAnnotation(lastAnnotation!.last!)
+            if lastAnnotation!.count == 2 {
+                self.currentPDFPage.addAnnotation(lastAnnotation!.first!)
             }
         }
-        annotationsToRedo.append(annotationToRemove!)
+        annotationsToRedo.append(lastAnnotation!)
         updateUndoRedoState()
     }
     
     /// Redo annotations by reverse order of undoing
     public func redoAnnotation() {
-        let annotationToRestore = annotationsToRedo.popLast()
-        guard annotationToRestore != nil else { return }
-        if annotationToRestore?.1 != .eraser {
-            DispatchQueue.main.async {
-                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.addAnnotation((annotationToRestore?.0)!)
+        let lastAnnotation = annotationsToRedo.popLast()
+        guard lastAnnotation != nil else { return }
+        DispatchQueue.main.async {
+            if lastAnnotation!.count == 2 {
+                self.currentPDFPage.removeAnnotation(lastAnnotation!.first!)
             }
-        } else {
-            DispatchQueue.main.async {
-                self.pdfView?.document?.page(at: (self.pdfView?.document?.index(for: (self.pdfView?.currentPage!)!))!)?.removeAnnotation((annotationToRestore?.0)!)
-            }
+            self.currentPDFPage.addAnnotation(lastAnnotation!.last!)
         }
-        annotationsToUndo.append(annotationToRestore!)
+        annotationsToUndo.append(lastAnnotation!)
         updateUndoRedoState()
     }
     
@@ -426,6 +413,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
 //                if self.annotation != nil && self.annotation != annotation && !self.erasedAnnotationPath.isEmpty {
                 if self.annotation != nil && self.annotation != annotation && !self.annotationBeingErasedPath.isEmpty {
                     
+                    var annotationsForUndo : [PDFAnnotation] = []
                     var replacementAnnotation : PDFAnnotation?
                     let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
                     if !erasedPath.isEmpty {
@@ -441,7 +429,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                             default:
                                 inkTypeToRecord = .pen
                             }
-                            self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
+                            annotationsForUndo.append(originalAnnotationCopy)
                             
                             // Add the replacement annotation
                             replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
@@ -449,15 +437,16 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                             replacementAnnotation?.border = originalAnnotationCopy.border
                             replacementAnnotation?.color = originalAnnotationCopy.color
                             replacementAnnotation?.userName = "\(inkTypeToRecord)"
-                            self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
+                            if let replacementAnnotationUnwrapped = replacementAnnotation {
+                                annotationsForUndo.append(replacementAnnotationUnwrapped)
+                                self.registerUndo(annotations: annotationsForUndo)
+                            }
                         }
                     }
                     // Remove the original annotation from the page
                     self.currentPDFPage.removeAnnotation(self.annotation)
-                    // ToDo - move the registerUndo here and check above
                     if !erasedPath.isEmpty && replacementAnnotation != nil {
                         self.currentPDFPage.addAnnotation(replacementAnnotation!)
-                        // ToDo - undo manager here and check above
                     }
                     self.annotationBeingErasedPath.removeAllPoints()
                         
@@ -536,9 +525,10 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     }
     
     private func drawErasedAnnotation(currentPDFPath: UIBezierPath) {
-        //if self.erasedAnnotationPath.isEmpty { return }
+        guard !self.erasedAnnotationPath.isEmpty else { return }
         
         DispatchQueue.main.async {
+            var annotationsForUndo : [PDFAnnotation] = []
             var replacementAnnotation : PDFAnnotation?
             let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
             if !erasedPath.isEmpty {
@@ -554,7 +544,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     default:
                         inkTypeToRecord = .pen
                     }
-                    self.annotationsToUndo.append((originalAnnotationCopy, .eraser))
+                    annotationsForUndo.append(originalAnnotationCopy)
                     
                     // Add the replacement annotation
                     replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
@@ -562,7 +552,10 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     replacementAnnotation?.border = originalAnnotationCopy.border
                     replacementAnnotation?.color = originalAnnotationCopy.color
                     replacementAnnotation?.userName = "\(inkTypeToRecord)"
-                    self.registerUndo(annotation: replacementAnnotation, inkType: .eraser)
+                    if let replacementAnnotationUnwrapped = replacementAnnotation {
+                        annotationsForUndo.append(replacementAnnotationUnwrapped)
+                        self.registerUndo(annotations: annotationsForUndo)
+                    }
                 }
             }
             
@@ -571,7 +564,6 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             
             if !erasedPath.isEmpty && replacementAnnotation != nil {
                 self.currentPDFPage.addAnnotation(replacementAnnotation!)
-                // ToDo - undo manager here and check above
             }
             self.annotationBeingErasedPath.removeAllPoints()
                 
