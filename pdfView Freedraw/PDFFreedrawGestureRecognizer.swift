@@ -404,7 +404,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             guard annotation.bounds.intersects(rect) else { continue }
             
             // Test a specific hit test for the point of intersection. More expensive.
-            guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
+            if annotation.type == "Ink" { // This test only works when there is a path
+                guard annotation.hitTest(pdfView: pdfView, pointInPage: pointInPage) ?? false else { continue }
+            }
             
             // Deal with non-ink annotations by simply erasing them
             if annotation.type != "Ink" || !eraseInkBySplittingPaths {
@@ -507,8 +509,9 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 let eraserPath = UIBezierPath(cgPath: currentUIViewPath.cgPath.copy(strokingWithWidth: 20.0, lineCap: .round, lineJoin: .round, miterLimit: 0))
                 let erasedAnnotationPaths = self.annotationBeingErasedPath.difference(with: eraserPath)
                 
-                self.erasedAnnotationPath.removeAllPoints()
                 for i in 0..<(erasedAnnotationPaths?.count ?? 0) {
+                    // Clear the erasedAnnotationPath and repopulate it - only if there is something to repopulate it with. Otherwise the last viable path is maintained for creating the finalized PDF annotation.
+                    self.erasedAnnotationPath.removeAllPoints()
                     self.erasedAnnotationPath = erasedAnnotationPaths![i]
                     
                     // Draw temporary annotation on screen using a CAShapeLayer, to be replaced later with the PDFAnnotation
@@ -542,7 +545,8 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     }
     
     private func drawErasedAnnotation(currentPDFPath: UIBezierPath) {
-        guard !self.erasedAnnotationPath.isEmpty else { return } // NB: In the very unlikely case that the finger is lifted EXACTLY when another line is touched, this will result with the immediate deletion of the whole annotation
+        // Prevent empty annotations when eraser is swiping too quickly
+        guard !self.erasedAnnotationPath.isEmpty else { return }
         
         DispatchQueue.main.async {
             var annotationsForUndo : [PDFAnnotation] = []
@@ -575,14 +579,16 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     annotationsForUndo.append(replacementAnnotationUnwrapped)
                     self.registerUndo(annotations: annotationsForUndo)
                 }
+            
+                // Remove the original annotation from the page
+                self.currentPDFPage.removeAnnotation(self.annotation)
                 
-            }
-            
-            // Remove the original annotation from the page
-            self.currentPDFPage.removeAnnotation(self.annotation)
-            
-            if !erasedPath.isEmpty && replacementAnnotation != nil {
-                self.currentPDFPage.addAnnotation(replacementAnnotation!)
+                if !erasedPath.isEmpty && replacementAnnotation != nil {
+                    self.currentPDFPage.addAnnotation(replacementAnnotation!)
+                }
+            } else {
+                // This should not be reached - just a safety measure to restore last viable annotation
+                self.annotation.color = self.originalAnnotationColor
             }
             self.annotationBeingErasedPath.removeAllPoints()
             self.erasedAnnotationPath.removeAllPoints()
@@ -597,16 +603,6 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     }
     
     // MARK: Helper Functions
-    // Function that clears any CAShape sublayers of the UIView
-    private func clearCAShapeLayer() {
-        DispatchQueue.main.async {
-            if self.drawVeil.layer.sublayers != nil {
-                for layer in self.drawVeil.layer.sublayers! {
-                    layer.removeFromSuperlayer()
-                }
-            }
-        }
-    }
     
     // Function that removes the drawVeil
     private func removeDrawVeil() {
@@ -615,28 +611,5 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 drawVeilSubview.removeFromSuperview()
             }
         }
-    }
-    
-    private func eraserTest(annotation: PDFAnnotation, pointInPage: CGPoint) -> Bool {
-        //guard (annotation.paths?.count ?? 0) > 0 else { return false }
-        //let boundingRectOrigin = self.pdfView!.convert(CGPoint(x:annotation.bounds.origin.x, y:annotation.bounds.minY), from: pdfView!)
-        let boundingRectOrigin = self.pdfView!.superview!.convert(annotation.bounds.origin, from: pdfView!)
-        if let translatedPath = translate(path: annotation.paths!.first!.cgPath, by: boundingRectOrigin)?.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0) {
-            if translatedPath.contains(pointInPage) {
-                return true
-            }
-        }
-        return false
-    }
-    
-    private func translate(path : CGPath?, by point: CGPoint) -> CGPath? {
-        let bezeirPath = UIBezierPath()
-        guard let prevPath = path else {
-            return nil
-        }
-        bezeirPath.cgPath = prevPath
-        bezeirPath.apply(CGAffineTransform(translationX: point.x, y: point.y))
-
-        return bezeirPath.cgPath
     }
 }

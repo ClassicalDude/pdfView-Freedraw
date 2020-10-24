@@ -10,7 +10,7 @@ import PDFKit
 
 extension UIBezierPath {
     
-    /// Extracts all of the path elements, their points and their control points. Expect types are the strings `"move"`, `"addLine"`, `"addQuadCurve"` and `"addCurve"`.
+    /// Extracts all of the path elements, their points and their control points. Returned expect types are the strings `"move"`, `"addLine"`, `"addQuadCurve"` and `"addCurve"`.
     func getPathElements() -> [(type: String?, point: CGPoint?, controlPoint: CGPoint?, controlPoint1: CGPoint?, controlPoint2: CGPoint?)] {
         
         let initialPath = UIBezierPath(cgPath: self.cgPath)
@@ -157,7 +157,9 @@ extension UIBezierPath {
 }
 
 extension PDFAnnotation {
+    /// Determines whether a point in the PDF page coordinate system is contained in an ink annotation's path.
     func hitTest(pdfView: PDFView, pointInPage: CGPoint) -> Bool? {
+        guard self.type == "Ink" else { return nil }
         if let boundingRectOrigin = pdfView.superview?.convert(self.bounds.origin, from: pdfView) {
             if let annotationPaths = self.paths {
                 if let translatedPath = UIBezierPath(originalPath: annotationPaths.first, translatedByPoint: boundingRectOrigin)?.cgPath.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0) {
