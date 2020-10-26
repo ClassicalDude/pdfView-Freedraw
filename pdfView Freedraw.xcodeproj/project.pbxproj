@@ -61,7 +61,6 @@
 			children = (
 				E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */,
 				E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */,
-				E4944F6B25473FDC00F4CFF8 /* Package.swift */,
 				E4944F572547343400F4CFF8 /* ClippingBezier */,
 				E435F0492526F73900A3BEEE /* pdfView Freedraw */,
 				E435F0482526F73900A3BEEE /* Products */,

@@ -14,7 +14,7 @@ public protocol PDFFreedrawGestureRecognizerUndoDelegate {
 }
 
 /// A UIGestureRecognizer class for free-drawing ink PDF annotations and erasing all annotations.
-class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
+public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// The color used by the free-draw annotation. The default is red.
     public var color = UIColor.red
     /// The line width of the free-draw annotation. The default is 3.

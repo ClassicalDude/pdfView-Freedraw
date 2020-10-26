@@ -1,0 +1,29 @@
+{
+  "": {
+    "swift-dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/master.swiftdeps"
+  },
+  "/Users/ron/Project/pdfView_Freedraw/pdfView Freedraw/FreedrawExtensions.swift": {
+    "dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/FreedrawExtensions.d",
+    "object": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/FreedrawExtensions.swift.o",
+    "swiftmodule": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/FreedrawExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/FreedrawExtensions.swiftdeps"
+  },
+  "/Users/ron/Project/pdfView_Freedraw/pdfView Freedraw/PDFFreedrawGestureRecognizer.swift": {
+    "dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/PDFFreedrawGestureRecognizer.d",
+    "object": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/PDFFreedrawGestureRecognizer.swift.o",
+    "swiftmodule": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/PDFFreedrawGestureRecognizer~partial.swiftmodule",
+    "swift-dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/PDFFreedrawGestureRecognizer.swiftdeps"
+  },
+  "/Users/ron/Project/pdfView_Freedraw/pdfView Freedraw/UIBezierPath+.swift": {
+    "dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/UIBezierPath+.d",
+    "object": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/UIBezierPath+.swift.o",
+    "swiftmodule": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/UIBezierPath+~partial.swiftmodule",
+    "swift-dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/UIBezierPath+.swiftdeps"
+  },
+  "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/DerivedSources/resource_bundle_accessor.swift": {
+    "dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/resource_bundle_accessor.d",
+    "object": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/resource_bundle_accessor.swift.o",
+    "swiftmodule": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/resource_bundle_accessor~partial.swiftmodule",
+    "swift-dependencies": "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/resource_bundle_accessor.swiftdeps"
+  }
+}

@@ -1,0 +1,272 @@
+### Swift dependencies file v0 ###
+provides-top-level:
+provides-nominal:
+provides-member:
+- ["So13PDFAnnotationC", ""]
+- ["So13PDFAnnotationC", "hitTest"]
+provides-dynamic-lookup:
+- "hitTest"
+depends-top-level:
+- !private "=="
+- "Bool"
+- !private "BooleanLiteralType"
+- "CGPoint"
+- "PDFAnnotation"
+- "PDFView"
+- !private "StringLiteralType"
+- "UIBezierPath"
+- !private "print"
+depends-member:
+- !private ["SK", ""]
+- !private ["So6CGRectV", "origin"]
+- !private ["s7CVarArgP", "UIBezierPath"]
+- !private ["s7CVarArgP", "bounds"]
+- !private ["s7CVarArgP", "convert"]
+- !private ["s7CVarArgP", "paths"]
+- !private ["s7CVarArgP", "print"]
+- !private ["s7CVarArgP", "superview"]
+- !private ["s7CVarArgP", "type"]
+- !private ["Sl", ""]
+- !private ["SL", ""]
+- !private ["s28CustomDebugStringConvertibleP", "UIBezierPath"]
+- !private ["s28CustomDebugStringConvertibleP", "bounds"]
+- !private ["s28CustomDebugStringConvertibleP", "convert"]
+- !private ["s28CustomDebugStringConvertibleP", "origin"]
+- !private ["s28CustomDebugStringConvertibleP", "paths"]
+- !private ["s28CustomDebugStringConvertibleP", "print"]
+- !private ["s28CustomDebugStringConvertibleP", "superview"]
+- !private ["s28CustomDebugStringConvertibleP", "type"]
+- !private ["s17CustomReflectableP", "origin"]
+- !private ["s23CustomStringConvertibleP", "UIBezierPath"]
+- !private ["s23CustomStringConvertibleP", ""]
+- !private ["s23CustomStringConvertibleP", "bounds"]
+- !private ["s23CustomStringConvertibleP", "convert"]
+- !private ["s23CustomStringConvertibleP", "paths"]
+- !private ["s23CustomStringConvertibleP", "print"]
+- !private ["s23CustomStringConvertibleP", "superview"]
+- !private ["s23CustomStringConvertibleP", "type"]
+- !private ["Se", "origin"]
+- !private ["SE", "origin"]
+- !private ["SQ", "UIBezierPath"]
+- !private ["SQ", ""]
+- !private ["SQ", "bounds"]
+- !private ["SQ", "convert"]
+- !private ["SQ", "origin"]
+- !private ["SQ", "paths"]
+- !private ["SQ", "print"]
+- !private ["SQ", "superview"]
+- !private ["SQ", "type"]
+- !private ["s43ExpressibleByExtendedGraphemeClusterLiteralP", ""]
+- !private ["s32ExpressibleByStringInterpolationP", ""]
+- !private ["s26ExpressibleByStringLiteralP", ""]
+- !private ["s33ExpressibleByUnicodeScalarLiteralP", ""]
+- !private ["SH", "UIBezierPath"]
+- !private ["SH", ""]
+- !private ["SH", "bounds"]
+- !private ["SH", "convert"]
+- !private ["SH", "paths"]
+- !private ["SH", "print"]
+- !private ["SH", "superview"]
+- !private ["SH", "type"]
+- !private ["s25LosslessStringConvertibleP", ""]
+- !private ["So22NSAccessibilityElementP", "convert"]
+- !private ["So22NSAccessibilityElementP", "superview"]
+- !private ["So15NSAccessibilityP", "convert"]
+- !private ["So15NSAccessibilityP", "superview"]
+- !private ["So29NSAnimatablePropertyContainerP", "convert"]
+- !private ["So29NSAnimatablePropertyContainerP", "superview"]
+- !private ["So19NSAnimationDelegateP", "superview"]
+- !private ["So25NSAppearanceCustomizationP", "convert"]
+- !private ["So25NSAppearanceCustomizationP", "superview"]
+- ["So8NSCodingP", "Bool"]
+- ["So8NSCodingP", "CGPoint"]
+- ["So8NSCodingP", "PDFView"]
+- !private ["So8NSCodingP", "UIBezierPath"]
+- !private ["So8NSCodingP", ""]
+- !private ["So8NSCodingP", "bounds"]
+- !private ["So8NSCodingP", "convert"]
+- !private ["So8NSCodingP", "convertPoint"]
+- !private ["So8NSCodingP", "convertRect"]
+- !private ["So8NSCodingP", "convertSize"]
+- ["So8NSCodingP", "hitTest"]
+- !private ["So8NSCodingP", "paths"]
+- !private ["So8NSCodingP", "print"]
+- !private ["So8NSCodingP", "superview"]
+- !private ["So8NSCodingP", "type"]
+- ["So9NSCopyingP", "Bool"]
+- ["So9NSCopyingP", "CGPoint"]
+- ["So9NSCopyingP", "PDFView"]
+- !private ["So9NSCopyingP", "UIBezierPath"]
+- !private ["So9NSCopyingP", "bounds"]
+- ["So9NSCopyingP", "hitTest"]
+- !private ["So9NSCopyingP", "paths"]
+- !private ["So9NSCopyingP", "print"]
+- !private ["So9NSCopyingP", "type"]
+- !private ["So21NSDraggingDestinationP", "convert"]
+- !private ["So21NSDraggingDestinationP", "superview"]
+- !private ["So14NSMenuDelegateP", "superview"]
+- ["So8NSObjectC", "Bool"]
+- ["So8NSObjectC", "CGPoint"]
+- ["So8NSObjectC", "PDFView"]
+- !private ["So8NSObjectC", "UIBezierPath"]
+- ["So8NSObjectC", ""]
+- !private ["So8NSObjectC", "bounds"]
+- !private ["So8NSObjectC", "convert"]
+- !private ["So8NSObjectC", "convertPoint"]
+- !private ["So8NSObjectC", "convertRect"]
+- !private ["So8NSObjectC", "convertSize"]
+- ["So8NSObjectC", "hitTest"]
+- !private ["So8NSObjectC", "paths"]
+- !private ["So8NSObjectC", "print"]
+- !private ["So8NSObjectC", "superview"]
+- !private ["So8NSObjectC", "type"]
+- ["So8NSObjectP", "Bool"]
+- ["So8NSObjectP", "CGPoint"]
+- ["So8NSObjectP", "PDFView"]
+- !private ["So8NSObjectP", "UIBezierPath"]
+- ["So8NSObjectP", ""]
+- !private ["So8NSObjectP", "bounds"]
+- !private ["So8NSObjectP", "convert"]
+- !private ["So8NSObjectP", "convertPoint"]
+- !private ["So8NSObjectP", "convertRect"]
+- !private ["So8NSObjectP", "convertSize"]
+- ["So8NSObjectP", "hitTest"]
+- !private ["So8NSObjectP", "paths"]
+- !private ["So8NSObjectP", "print"]
+- !private ["So8NSObjectP", "superview"]
+- !private ["So8NSObjectP", "type"]
+- ["So11NSResponderC", ""]
+- !private ["So11NSResponderC", "convert"]
+- !private ["So11NSResponderC", "convertPoint"]
+- !private ["So11NSResponderC", "convertRect"]
+- !private ["So11NSResponderC", "convertSize"]
+- !private ["So11NSResponderC", "superview"]
+- !private ["So30NSStandardKeyBindingRespondingP", ""]
+- !private ["So30NSStandardKeyBindingRespondingP", "convert"]
+- !private ["So30NSStandardKeyBindingRespondingP", "convertPoint"]
+- !private ["So30NSStandardKeyBindingRespondingP", "convertRect"]
+- !private ["So30NSStandardKeyBindingRespondingP", "convertSize"]
+- !private ["So30NSStandardKeyBindingRespondingP", "superview"]
+- !private ["So18NSTouchBarProviderP", ""]
+- !private ["So18NSTouchBarProviderP", "convert"]
+- !private ["So18NSTouchBarProviderP", "convertPoint"]
+- !private ["So18NSTouchBarProviderP", "convertRect"]
+- !private ["So18NSTouchBarProviderP", "convertSize"]
+- !private ["So18NSTouchBarProviderP", "superview"]
+- !private ["So23NSUserActivityRestoringP", ""]
+- !private ["So23NSUserActivityRestoringP", "convert"]
+- !private ["So23NSUserActivityRestoringP", "convertPoint"]
+- !private ["So23NSUserActivityRestoringP", "convertRect"]
+- !private ["So23NSUserActivityRestoringP", "convertSize"]
+- !private ["So23NSUserActivityRestoringP", "superview"]
+- !private ["So33NSUserInterfaceItemIdentificationP", "convert"]
+- !private ["So33NSUserInterfaceItemIdentificationP", "superview"]
+- ["So6NSViewC", ""]
+- !private ["So6NSViewC", "convert"]
+- !private ["So6NSViewC", "superview"]
+- ["So13PDFAnnotationC", "Bool"]
+- ["So13PDFAnnotationC", "CGPoint"]
+- ["So13PDFAnnotationC", "PDFView"]
+- !private ["So13PDFAnnotationC", "UIBezierPath"]
+- ["So13PDFAnnotationC", ""]
+- !private ["So13PDFAnnotationC", "bounds"]
+- ["So13PDFAnnotationC", "hitTest"]
+- !private ["So13PDFAnnotationC", "paths"]
+- !private ["So13PDFAnnotationC", "print"]
+- !private ["So13PDFAnnotationC", "type"]
+- !private ["So7PDFViewC", "superview"]
+- !private ["ST", ""]
+- !private ["s16TextOutputStreamP", ""]
+- !private ["s20TextOutputStreamableP", ""]
+- !private ["s30_CustomPlaygroundQuickLookableP", "origin"]
+- !private ["s35_ExpressibleByBuiltinBooleanLiteralP", "init"]
+- !private ["s51_ExpressibleByBuiltinExtendedGraphemeClusterLiteralP", ""]
+- !private ["s35_ExpressibleByBuiltinIntegerLiteralP", "init"]
+- !private ["s34_ExpressibleByBuiltinStringLiteralP", "init"]
+- !private ["s41_ExpressibleByBuiltinUnicodeScalarLiteralP", ""]
+- !private ["10Foundation27_KeyValueCodingAndObservingP", "UIBezierPath"]
+- !private ["10Foundation27_KeyValueCodingAndObservingP", "bounds"]
+- !private ["10Foundation27_KeyValueCodingAndObservingP", "convert"]
+- !private ["10Foundation27_KeyValueCodingAndObservingP", "paths"]
+- !private ["10Foundation27_KeyValueCodingAndObservingP", "print"]
+- !private ["10Foundation27_KeyValueCodingAndObservingP", "superview"]
+- !private ["10Foundation27_KeyValueCodingAndObservingP", "type"]
+- !private ["10Foundation37_KeyValueCodingAndObservingPublishingP", "UIBezierPath"]
+- !private ["10Foundation37_KeyValueCodingAndObservingPublishingP", "bounds"]
+- !private ["10Foundation37_KeyValueCodingAndObservingPublishingP", "convert"]
+- !private ["10Foundation37_KeyValueCodingAndObservingPublishingP", "paths"]
+- !private ["10Foundation37_KeyValueCodingAndObservingPublishingP", "print"]
+- !private ["10Foundation37_KeyValueCodingAndObservingPublishingP", "superview"]
+- !private ["10Foundation37_KeyValueCodingAndObservingPublishingP", "type"]
+- !private ["s21_ObjectiveCBridgeableP", "origin"]
+- !private ["s38__DefaultCustomPlaygroundQuickLookableP", "convert"]
+- !private ["s38__DefaultCustomPlaygroundQuickLookableP", "superview"]
+depends-nominal:
+- !private "SK"
+- !private "So6CGRectV"
+- !private "s7CVarArgP"
+- !private "Sl"
+- !private "SL"
+- !private "s28CustomDebugStringConvertibleP"
+- !private "s17CustomReflectableP"
+- !private "s23CustomStringConvertibleP"
+- !private "Se"
+- !private "SE"
+- !private "SQ"
+- !private "s43ExpressibleByExtendedGraphemeClusterLiteralP"
+- !private "s32ExpressibleByStringInterpolationP"
+- !private "s26ExpressibleByStringLiteralP"
+- !private "s33ExpressibleByUnicodeScalarLiteralP"
+- !private "SH"
+- !private "s25LosslessStringConvertibleP"
+- !private "So22NSAccessibilityElementP"
+- !private "So15NSAccessibilityP"
+- !private "So29NSAnimatablePropertyContainerP"
+- !private "So19NSAnimationDelegateP"
+- !private "So25NSAppearanceCustomizationP"
+- "So8NSCodingP"
+- "So9NSCopyingP"
+- !private "So21NSDraggingDestinationP"
+- !private "So14NSMenuDelegateP"
+- "So8NSObjectC"
+- "So8NSObjectP"
+- "So11NSResponderC"
+- !private "So30NSStandardKeyBindingRespondingP"
+- !private "So18NSTouchBarProviderP"
+- !private "So23NSUserActivityRestoringP"
+- !private "So33NSUserInterfaceItemIdentificationP"
+- "So6NSViewC"
+- "So13PDFAnnotationC"
+- !private "So7PDFViewC"
+- !private "ST"
+- !private "s16TextOutputStreamP"
+- !private "s20TextOutputStreamableP"
+- !private "s30_CustomPlaygroundQuickLookableP"
+- !private "s35_ExpressibleByBuiltinBooleanLiteralP"
+- !private "s51_ExpressibleByBuiltinExtendedGraphemeClusterLiteralP"
+- !private "s35_ExpressibleByBuiltinIntegerLiteralP"
+- !private "s34_ExpressibleByBuiltinStringLiteralP"
+- !private "s41_ExpressibleByBuiltinUnicodeScalarLiteralP"
+- !private "10Foundation27_KeyValueCodingAndObservingP"
+- !private "10Foundation37_KeyValueCodingAndObservingPublishingP"
+- !private "s21_ObjectiveCBridgeableP"
+- !private "s38__DefaultCustomPlaygroundQuickLookableP"
+depends-dynamic-lookup:
+depends-external:
+- "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/module.modulemap"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include/xpc/XPC.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include/objc/ObjectiveC.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/CoreData.framework/Headers/CoreData.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/CoreImage.framework/Headers/CoreImage.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/QuartzCore.framework/Headers/QuartzCore.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/apinotes/Dispatch.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Metal.framework/Headers/Metal.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/include/Darwin.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Foundation.framework/Headers/Foundation.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/CoreGraphics.framework/Headers/CoreGraphics.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/ApplicationServices.framework/Headers/ApplicationServices.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/PDFKit.framework/Headers/PDFKit.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/AppKit.framework/Headers/AppKit.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/CoreText.framework/Headers/CoreText.apinotes"
+- "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Security.framework/Headers/Security.apinotes"
+interface-hash: "1880a44c30df111037a94c482f504064"
