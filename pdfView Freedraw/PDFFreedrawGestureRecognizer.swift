@@ -13,55 +13,60 @@ public protocol PDFFreedrawGestureRecognizerUndoDelegate {
     func freedrawUndoStateChanged()
 }
 
+/// A UIGestureRecognizer class for free-drawing ink PDF annotations and erasing all annotations.
 class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
-    /// The color used by the free draw annotation
+    /// The color used by the free-draw annotation. The default is red.
     public var color = UIColor.red
-    /// The line width of the free draw annotation
+    /// The line width of the free-draw annotation. The default is 3.
     public var width : CGFloat = 3
-    /// An enum defining the three options for free draw: pen, highlighter and eraser
+    /// An enum defining the three types of free-draw: pen, highlighter and eraser.
     public enum FreedrawType {
         case pen
         case eraser
         case highlighter
     }
-    /// The type of free draw annotation. Select between pen, highlighter and eraser
+    /// The type of free-draw annotation. Select between pen, highlighter and eraser.
     public var inkType : FreedrawType = .pen
     
-    /// The number of annotations to keep in the undo history. The default is 10
+    /// The alpha component of the free-draw highlighter. The default is 0.3.
+    public var highlighterAlphaComponent : CGFloat = 0.3
+    
+    /// The number of annotations to keep in the undo history. The default is 10.
     public var maxUndoNumber : Int = 10
     
     /// When `true`, closed and nearly-closed curves will be drawn as perfect ovals
     public var convertClosedCurvesToOvals = false
     
-    /// Bool indicating whether there are annotations that can be undone
-    public var canUndo = false
+    /// Bool indicating whether there are annotations that can be undone.
+    private(set) var canUndo = false
     
-    /// Bool indicating whether there are annotations that can be redone
-    public var canRedo = false
+    /// Bool indicating whether there are annotations that can be redone.
+    private(set) var canRedo = false
     
     /// Bool indicating whether the eraser should try to split ink annotation paths (`true`) or delete ink annotations as whole (`false`), similarly to all other annotations
     public var eraseInkBySplittingPaths = true
     
     public var undoDelegate : PDFFreedrawGestureRecognizerUndoDelegate?
     
-    private var passedSafetyChecks = false // Used to record all of the unwrappings of touchesBegan
-    private var drawVeil = UIView() // Used for temporary on a CAShapeLayer during touchesMoved
+    private var passedSafetyChecks = false // Used to record all of the unwrappings and conditions of touchesBegan
+    private var drawVeil = UIView() // Used for temporary canvas drawing on a CAShapeLayer during touchesMoved
     private var startLocation : CGPoint? // Starting touch point for every touches function
     private var movedTest : CGPoint? // Used to compare locations between touchesBegan and touchesEnded, to ensure there actually was a moving gesture
     private var totalDistance : CGFloat = 0 // Used to measure overall distances between the touches functions, to ensure there was a moving gesture
-    private var signingPath = UIBezierPath() // The path in the PDF page coordinate system
-    private var viewPath = UIBezierPath() // The path in the UIView coordinate system
+    private var signingPath = UIBezierPath() // The gesture path in the PDF page coordinate system
+    private var viewPath = UIBezierPath() // The gesture path in the UIView coordinate system
     private var pdfView : PDFView! // The view of the PDF document
     private var currentPDFPage : PDFPage! // Safely unwrapped variable used for the current PDF page
-    private var annotation : PDFAnnotation! // The annotation path we are actively drawing or deleting
-    private var annotationBeingErasedPath = UIBezierPath() // An annotation we are actively erasing
-    private var erasedAnnotationPath = UIBezierPath()
-    private var annotationBeingErasedIndicator = false
+    private var annotation : PDFAnnotation! // The annotation we are actively drawing or deleting
+    private var annotationBeingErasedPath = UIBezierPath() // An annotation path we are actively erasing
+    private var erasedAnnotationPath = UIBezierPath() // A split path created from intersection of the original annotation path and the eraser gesture path
     private var originalAnnotationColor : UIColor! // Used to track the active PDF annotation color when it is hidden during the erasing process
-    // Undo manager variables
+    
+    // Undo manager undo and redo histories. Usually only one annotation is recorded in the internal array. Two are recorded only when erasing an annotation by splitting its path - the original one and the split-path one.
     private var annotationsToUndo : [[PDFAnnotation?]] = []
     private var annotationsToRedo : [[PDFAnnotation?]] = []
     
+    // The recomended init for using the class
     convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
         self.init()
         self.color = color ?? UIColor.red
@@ -72,7 +77,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     // MARK: Touches Began
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
-        // Perform safety checks and get the PDFView to annotate
+        // Perform safety checks and get the PDFView on which we will annotate
         if let possiblePDFViews = self.view?.subviews.filter({$0 is PDFView}) {
             if possiblePDFViews.count > 1 {
                 print ("PDFFreedrawGestureRecognizer cannot be attached to a view that has more than one PDFView as a subview")
@@ -93,21 +98,26 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         // Check that we have a valid pdfDocument
         if pdfView.document == nil {
             print ("There is no document associated with the PDF view. Exiting PDFFreedrawGestureRecognizer")
+            return
         }
         
         // Check that we have a valid pdfPage and assign it to the class variable
         if let currentPDFPageTest = pdfView.document!.page(at: (pdfView.document!.index(for: (pdfView.currentPage ?? PDFPage())))) {
             currentPDFPage = currentPDFPageTest
+        } else {
+            print ("Could not unwrap the current PDF page. Exiting PDFFreedrawGestureRecognizer")
+            return
         }
         
         // Record the fact that we got that far, to be used in touchesMoved and touchesEnded
         passedSafetyChecks = true
         
+        // Deal with the touch gesture
         if let touch = touches.first {
             
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { // Anything that requires drawing on screen should happen on the main thread
                 
-                // Attach the UIView that we will use to draw the annotation on a CALayer, until the touches end
+                // Attach the UIView that we will use for temporarily drawing the annotation on a CAShapeLayer, until the touchesEnded phase
                 self.drawVeil = UIView(frame: self.pdfView.frame)
                 self.drawVeil.tag = 35791 // For identifying and removing all instances later on
                 self.drawVeil.isUserInteractionEnabled = false
@@ -120,11 +130,12 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 // startLocation will be used for adding to the UIBezierPath
                 self.startLocation = touch.location(in: self.pdfView)
                 guard (self.startLocation != nil) else { return }
-                self.totalDistance = 0
+                self.totalDistance = 0 // For checking later on that the gesture is significant
                 
                 // Clear and initialize the UIBezierPath used on the PDF page coordinate system
                 self.signingPath = UIBezierPath()
-                self.signingPath.move(to: self.pdfView!.convert(self.startLocation!, to: self.pdfView!.page(for: self.startLocation!, nearest: true)!))
+                // Move the path to a starting point in the PDF page coordinate system
+                self.signingPath.move(to: self.pdfView.convert(self.startLocation!, to: self.pdfView.page(for: self.startLocation!, nearest: true)!))
                 
                 // Clear and initialize the UIBezierPath for the CAShapeLayer we will use during touchesMoved
                 self.viewPath = UIBezierPath()
@@ -141,10 +152,11 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         }
         
         if let touch = touches.first {
+            
             DispatchQueue.main.async {
                 
                 // Test for minimal viable distance to register the move
-                let currentLocation = touch.location(in: self.pdfView)
+                let currentLocation = touch.location(in: self.pdfView) // Current finger location on screen
                 let vector = currentLocation.vector(to: self.startLocation!)
                 self.totalDistance += sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
                 if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
@@ -154,12 +166,11 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 // Reset redo history after the touches started moving
                 if self.annotationsToRedo.count > 0 {
                     self.annotationsToRedo.removeAll()
-                    self.updateUndoRedoState()
+                    self.updateUndoRedoState() // Update the delegate so it can change the button states
                 }
                 
-                // Get the current gesture location
-                let position = touch.location(in: self.pdfView)
-                let convertedPoint = self.pdfView!.convert(position, to: self.pdfView!.page(for: position, nearest: true)!)
+                // Convert the current finger location to the PDF page coordinate system
+                let convertedPoint = self.pdfView.convert(currentLocation, to: self.pdfView.page(for: currentLocation, nearest: true)!)
                 // Add line to the PDF annotation UIBezierPath
                 self.signingPath.addLine(to: convertedPoint) // For the PDFAnnotation
                 
@@ -184,10 +195,10 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 
                 // Erase annotation if in eraser mode
                 if self.inkType == .eraser {
-                    self.erase(rect: rect, pointInPage: convertedPoint, currentPDFPath: self.signingPath, currentUIViewPath: self.viewPath)
+                    self.erase(rect: rect, pointInPage: convertedPoint, currentUIViewPath: self.viewPath)
                 } else {
                     
-                    // Clear any remaining CAShapeLayer from the drawVeil. We cannot use the helper function here, because two DispatchQueues create a race condition.
+                    // Clear any remaining CAShapeLayer from the drawVeil.
                     if self.drawVeil.layer.sublayers != nil {
                         for layer in self.drawVeil.layer.sublayers! {
                             layer.removeFromSuperlayer()
@@ -197,13 +208,13 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     // Choose the transparency of the annotation based on its type
                     var alphaComponent : CGFloat = 1.0
                     if self.inkType == .highlighter {
-                        alphaComponent = 0.3
+                        alphaComponent = self.highlighterAlphaComponent
                     }
                     
                     // Draw temporary annotation on screen using a CAShapeLayer, to be replaced later with the PDFAnnotation
                     let viewPathLayer = CAShapeLayer()
                     viewPathLayer.strokeColor = self.color.withAlphaComponent(alphaComponent).cgColor
-                    viewPathLayer.lineWidth = CGFloat(self.width * self.pdfView!.scaleFactor) // Note the use of the scale factor! Necessary for keeping this drawing identical to the final PDF annotation
+                    viewPathLayer.lineWidth = CGFloat(self.width * self.pdfView.scaleFactor) // Note the use of the scale factor! Necessary for keeping this drawing identical to the final PDF annotation
                     viewPathLayer.path = self.viewPath.cgPath
                     viewPathLayer.fillColor = UIColor.clear.cgColor
                     viewPathLayer.lineJoin = CAShapeLayerLineJoin.round
@@ -232,7 +243,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 let currentLocation = touch.location(in: self.pdfView)
                 let vector = currentLocation.vector(to: self.movedTest!)
                 self.totalDistance += sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
-                if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
+                if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance. Remember to be consistent with touchesMoved
                     self.signingPath.removeAllPoints() // Prevent a short line when accessed from long tap
                     self.viewPath.removeAllPoints()
                     // Remove the UIView for the CAShapeLayer
@@ -240,14 +251,13 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     return
                 }
                 
-                // Get the current gesture location
-                let position = touch.location(in: self.pdfView)
-                let convertedPoint = self.pdfView!.convert(position, to: self.pdfView!.page(for: position, nearest: true)!)
+                // Convert the current finger location to the PDF page coordinate system
+                let convertedPoint = self.pdfView.convert(currentLocation, to: self.pdfView.page(for: currentLocation, nearest: true)!)
                 
-                // Append the move to the UIBezierPath of the PDF annotation.
+                // Add line to the PDF annotation UIBezierPath
                 self.signingPath.addLine(to: convertedPoint)
                 
-                // Prevent crashes with very short gestures. This will also be called if we failed the distance check earlier, because the signing path was emptied.
+                // Prevent crashes with very short gestures
                 if self.signingPath.isEmpty {
                     self.viewPath.removeAllPoints()
                     // Remove the UIView for the CAShapeLayer
@@ -264,7 +274,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     rect = self.signingPath.bounds
                 }
                 
-                // Create a temporary PDF annotation for a framework workaround
+                // Create a temporary PDF annotation for a PDFKit bug workaround
                 let currentAnnotation = PDFAnnotation(bounds: rect, forType: .ink, withProperties: nil)
             
                 // Workaround for a bug in PDFKit - remove the annotation before you add it
@@ -272,18 +282,14 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 
                 // Eraser
                 if self.inkType == .eraser {
-                    self.erase(rect: rect, pointInPage: convertedPoint, currentPDFPath: self.signingPath, currentUIViewPath: self.viewPath)
-                    self.drawErasedAnnotation(currentPDFPath: self.signingPath)
-                    // Remove the UIView for the CAShapeLayer
-//                    for drawVeilSubview in self.pdfView!.superview!.subviews.filter({$0.tag==35791}) {
-//                        drawVeilSubview.removeFromSuperview()
-//                    }
+                    self.erase(rect: rect, pointInPage: convertedPoint, currentUIViewPath: self.viewPath)
+                    self.drawErasedAnnotation() // This function sets an annotation path split by the eraser as new PDF annotation, replacing the original one
+                    
                     self.viewPath.removeAllPoints()
 
                 } else {
                     
-                    // Check if we created a circle. If we did, and the class variable for this is true, get a revised path.
-                    
+                    // Check if we created a circle. If we did, and the class variable for this is true, get a revised path. The default ovalIn UIBezierPath init creates a closed path, which cannot be split by other paths
                     if self.convertClosedCurvesToOvals, self.signingPath.resemblesOval(), self.inkType != .eraser {
                         self.signingPath = UIBezierPath(openOvalIn: rect)
                     }
@@ -299,22 +305,21 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.annotation.border = b
                     var alphaComponent : CGFloat = 1.0
                     if self.inkType == .highlighter {
-                        alphaComponent = 0.3
+                        alphaComponent = self.highlighterAlphaComponent
                     }
                     self.annotation.color = self.color.withAlphaComponent(alphaComponent)
+                    // Move the annotation path to the center of its rect, because a path in a PDF annotation must be relative to the annotation's rect and not to the screen or page
                     _ = self.signingPath.moveCenter(to: rect.center)
                     self.annotation.add(self.signingPath)
-                    // Record the annotation type at a convenient metadata field
+                    // Record the annotation type in a convenient metadata field
                     self.annotation.userName = "\(self.inkType)"
                     self.currentPDFPage.addAnnotation(self.annotation)
+                    // Add the annotation to the undo manager
                     self.registerUndo(annotations: [self.annotation])
                     
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
                     self.viewPath.removeAllPoints()
-                    
-                    // Make sure the annotation is nil
-                    //self.annotation = nil
                 }
             }
         }
@@ -322,17 +327,26 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     // MARK: Undo Manager
     
-    /// Function that registers the last annotation action in the undo history
-    public func registerUndo(annotations: [PDFAnnotation?]?) {
+    // Function that registers the last annotation action in the undo history
+    // Usually only one annotation is recorded in the internal array. Two are recorded only when erasing an annotation by splitting its path - the original one and the split-path one.
+    private func registerUndo(annotations: [PDFAnnotation?]?) {
         guard annotations != nil else { return }
         annotationsToUndo.append(annotations!)
         
+        // Keep the number of entries to the limit set by the user, unless it is 0
         if annotationsToUndo.count > maxUndoNumber && maxUndoNumber != 0 {
             annotationsToUndo.removeFirst()
         }
+        // Update the delegate so it can adjust the button states
         updateUndoRedoState()
     }
     
+    /// Registers any PDFAnnotation in the PDFFreedrawGestureRecognizer undo manager. NB: Ink annotations created by PDFFreedrawGestureRecognizer are registered automatically.
+    public func registerInAnnotationUndoManager(annotation: PDFAnnotation) {
+        registerUndo(annotations: [annotation])
+    }
+    
+    // Function that checks the state of the undo and redo histories, and alerts the delegate accordingly
     private func updateUndoRedoState() {
         if annotationsToUndo.count > 0 {
             if canUndo == false {
@@ -370,6 +384,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             if lastAnnotation!.last! != nil {
                 self.currentPDFPage.removeAnnotation(lastAnnotation!.last!!)
             }
+            // If this annotation entry is double, then it was created by splitting a UIBezierPath, and the original was also recorded and should be restored
             if lastAnnotation!.count == 2 {
                 self.currentPDFPage.addAnnotation(lastAnnotation!.first!!)
             }
@@ -383,6 +398,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         let lastAnnotation = annotationsToRedo.popLast()
         guard lastAnnotation != nil else { return }
         DispatchQueue.main.async {
+            // If this annotation entry is double, then it was created by splitting a UIBezierPath, and the original was restored by the undo function and should now be removed
             if lastAnnotation!.count == 2 {
                 self.currentPDFPage.removeAnnotation(lastAnnotation!.first!!)
             }
@@ -396,7 +412,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     // MARK: Eraser
     
-    private func erase(rect: CGRect, pointInPage: CGPoint, currentPDFPath: UIBezierPath, currentUIViewPath: UIBezierPath) {
+    private func erase(rect: CGRect, pointInPage: CGPoint, currentUIViewPath: UIBezierPath) {
         let annotations = currentPDFPage.annotations
         guard annotations.count > 0 else { return }
         for annotation in annotations {
@@ -544,7 +560,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         }
     }
     
-    private func drawErasedAnnotation(currentPDFPath: UIBezierPath) {
+    private func drawErasedAnnotation() {
         // Prevent empty annotations when eraser is swiping too quickly
         guard !self.erasedAnnotationPath.isEmpty else { return }
         
