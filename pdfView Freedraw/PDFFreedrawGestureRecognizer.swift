@@ -75,7 +75,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     }
     
     // MARK: Touches Began
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
         // Perform safety checks and get the PDFView on which we will annotate
         if let possiblePDFViews = self.view?.subviews.filter({$0 is PDFView}) {
@@ -146,7 +146,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     // MARK: Touches Moved
     
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         if !passedSafetyChecks {
             return
         }
@@ -231,7 +231,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     // MARK: Touches Ended
     
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         if !passedSafetyChecks {
             return
         }
