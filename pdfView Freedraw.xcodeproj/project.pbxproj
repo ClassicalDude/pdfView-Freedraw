@@ -16,11 +16,10 @@
 		E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E435F05F2526F7AE00A3BEEE /* blank.pdf */; };
 		E435F0632526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */; };
 		E435F067252711E700A3BEEE /* UIBezierPath+.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F066252711E700A3BEEE /* UIBezierPath+.swift */; };
-		E4736AA125331B520010622A /* libPerformanceBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4736A9F25331B520010622A /* libPerformanceBezier.a */; };
-		E4736AA225331B520010622A /* libClippingBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4736AA025331B520010622A /* libClippingBezier.a */; };
-		E4736AA6253322EB0010622A /* ClippingBezier in Resources */ = {isa = PBXBuildFile; fileRef = E4736AA4253322EB0010622A /* ClippingBezier */; };
-		E4736AA7253322EB0010622A /* PerformanceBezier in Resources */ = {isa = PBXBuildFile; fileRef = E4736AA5253322EB0010622A /* PerformanceBezier */; };
 		E4736AAB253369380010622A /* FreedrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4736AAA253369380010622A /* FreedrawExtensions.swift */; };
+		E4944F582547343400F4CFF8 /* ClippingBezier in Resources */ = {isa = PBXBuildFile; fileRef = E4944F572547343400F4CFF8 /* ClippingBezier */; };
+		E4944F67254738C100F4CFF8 /* libPerformanceBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4944F65254738C100F4CFF8 /* libPerformanceBezier.a */; };
+		E4944F68254738C100F4CFF8 /* libClippingBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4944F66254738C100F4CFF8 /* libClippingBezier.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,11 +34,11 @@
 		E435F05F2526F7AE00A3BEEE /* blank.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = blank.pdf; sourceTree = "<group>"; };
 		E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFFreedrawGestureRecognizer.swift; sourceTree = "<group>"; };
 		E435F066252711E700A3BEEE /* UIBezierPath+.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIBezierPath+.swift"; sourceTree = "<group>"; };
-		E4736A9F25331B520010622A /* libPerformanceBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libPerformanceBezier.a; sourceTree = "<group>"; };
-		E4736AA025331B520010622A /* libClippingBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libClippingBezier.a; sourceTree = "<group>"; };
-		E4736AA4253322EB0010622A /* ClippingBezier */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ClippingBezier; sourceTree = "<group>"; };
-		E4736AA5253322EB0010622A /* PerformanceBezier */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PerformanceBezier; sourceTree = "<group>"; };
 		E4736AAA253369380010622A /* FreedrawExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FreedrawExtensions.swift; sourceTree = "<group>"; };
+		E4944F572547343400F4CFF8 /* ClippingBezier */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ClippingBezier; sourceTree = SOURCE_ROOT; };
+		E4944F65254738C100F4CFF8 /* libPerformanceBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libPerformanceBezier.a; path = ClippingBezier/Libraries/libPerformanceBezier.a; sourceTree = "<group>"; };
+		E4944F66254738C100F4CFF8 /* libClippingBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libClippingBezier.a; path = ClippingBezier/Libraries/libClippingBezier.a; sourceTree = "<group>"; };
+		E4944F6B25473FDC00F4CFF8 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Bridging-Header.h"; sourceTree = "<group>"; };
 		E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Prefix.pch"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -49,8 +48,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E4736AA125331B520010622A /* libPerformanceBezier.a in Frameworks */,
-				E4736AA225331B520010622A /* libClippingBezier.a in Frameworks */,
+				E4944F67254738C100F4CFF8 /* libPerformanceBezier.a in Frameworks */,
+				E4944F68254738C100F4CFF8 /* libClippingBezier.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,10 +61,11 @@
 			children = (
 				E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */,
 				E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */,
+				E4944F6B25473FDC00F4CFF8 /* Package.swift */,
+				E4944F572547343400F4CFF8 /* ClippingBezier */,
 				E435F0492526F73900A3BEEE /* pdfView Freedraw */,
 				E435F0482526F73900A3BEEE /* Products */,
-				E4F4FCEB252E641500850708 /* Headers */,
-				E4F4FCE3252E62AE00850708 /* Frameworks */,
+				E4944F64254738C100F4CFF8 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -95,22 +95,13 @@
 			path = "pdfView Freedraw";
 			sourceTree = "<group>";
 		};
-		E4F4FCE3252E62AE00850708 /* Frameworks */ = {
+		E4944F64254738C100F4CFF8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				E4736AA025331B520010622A /* libClippingBezier.a */,
-				E4736A9F25331B520010622A /* libPerformanceBezier.a */,
+				E4944F66254738C100F4CFF8 /* libClippingBezier.a */,
+				E4944F65254738C100F4CFF8 /* libPerformanceBezier.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		E4F4FCEB252E641500850708 /* Headers */ = {
-			isa = PBXGroup;
-			children = (
-				E4736AA4253322EB0010622A /* ClippingBezier */,
-				E4736AA5253322EB0010622A /* PerformanceBezier */,
-			);
-			path = Headers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -170,9 +161,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E4736AA7253322EB0010622A /* PerformanceBezier in Resources */,
 				E435F0572526F73B00A3BEEE /* LaunchScreen.storyboard in Resources */,
-				E4736AA6253322EB0010622A /* ClippingBezier in Resources */,
+				E4944F582547343400F4CFF8 /* ClippingBezier in Resources */,
 				E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */,
 				E435F0542526F73B00A3BEEE /* Assets.xcassets in Resources */,
 				E435F0522526F73900A3BEEE /* Main.storyboard in Resources */,
@@ -342,7 +332,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 57682FTYCX;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/pdfView-Freedraw-Prefix.pch";
-				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Headers";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/ClippingBezier/Headers";
 				INFOPLIST_FILE = "pdfView Freedraw/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -352,6 +342,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ClippingBezier/Libraries",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC++",
@@ -375,7 +366,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 57682FTYCX;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/pdfView-Freedraw-Prefix.pch";
-				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Headers";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/ClippingBezier/Headers";
 				INFOPLIST_FILE = "pdfView Freedraw/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -385,6 +376,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ClippingBezier/Libraries",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC++",
