@@ -12,7 +12,7 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "PDFFreedraw",
-            url: "https://drive.google.com/uc?export=download&id=19n8_BNOau_IpyCOfcLdKkUQcghPXHChd",
+            url: "https://www.dropbox.com/s/jo792e00gmqw6rt/PDFFreedraw.xcframework.zip",
             checksum: "34ab171fed4421f2ad29f2475586f36a20667a5b4bcf514ed6e4d629a1a2481d"
         )
     ]
