@@ -46,12 +46,12 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
             self.view.sendSubviewToBack(pdfView) // Allow the UIButtons to be on top
             
             // The following block adjusts the view and its contents in an optimal way for display and annotation
-            // First - a few useful options, now commented out
-//            pdfView.displayMode = .singlePage
-//            pdfView.displayDirection = .horizontal
-//            pdfView.usePageViewController(false, withViewOptions: [:])
-//            pdfView.translatesAutoresizingMaskIntoConstraints = true
-//            pdfView.contentMode = .scaleAspectFit
+            // First - a layout options, necessary to ensure consistent results for all documents
+            pdfView.displayMode = .singlePage
+            pdfView.displayDirection = .horizontal
+            pdfView.usePageViewController(false, withViewOptions: [:])
+            pdfView.translatesAutoresizingMaskIntoConstraints = true
+            pdfView.contentMode = .scaleAspectFit
             
             // From here - options that should probably be set, and by this order, including the repeats
             // This ensures the proper scaling of the PDF page

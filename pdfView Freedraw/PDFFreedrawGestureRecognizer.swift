@@ -7,6 +7,8 @@
 
 import UIKit
 import PDFKit
+//import ClippingBezier
+//import PerformanceBezier
 
 /// A protocol that allows delegates of `PDFFreedrawGestureRecognizer` to respond to changes in the undo state of the class object.
 public protocol PDFFreedrawGestureRecognizerUndoDelegate {
@@ -38,10 +40,10 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     public var convertClosedCurvesToOvals = false
     
     /// Bool indicating whether there are annotations that can be undone.
-    private(set) var canUndo = false
+    public private(set) var canUndo = false
     
     /// Bool indicating whether there are annotations that can be redone.
-    private(set) var canRedo = false
+    public private(set) var canRedo = false
     
     /// Bool indicating whether the eraser should try to split ink annotation paths (`true`) or delete ink annotations as whole (`false`), similarly to all other annotations
     public var eraseInkBySplittingPaths = true
@@ -67,7 +69,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     private var annotationsToRedo : [[PDFAnnotation?]] = []
     
     // The recomended init for using the class
-    convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
+    public convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
         self.init()
         self.color = color ?? UIColor.red
         self.width = width ?? 3
@@ -522,7 +524,9 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         let pdfPageBounds = self.pdfView.convert(self.currentPDFPage.bounds(for: .cropBox), from: self.currentPDFPage)
                         // Apply transformations to the annotation path from PDF annotation coordinates to UIView coordinates, taking into account the view's scale factor
                         self.annotationBeingErasedPath.apply(CGAffineTransform(scaleX: self.pdfView.scaleFactor, y: -self.pdfView.scaleFactor))
+                        //self.annotationBeingErasedPath.apply(CGAffineTransform(translationX: origin.x*self.pdfView.scaleFactor + pdfPageBounds.minX, y: self.pdfView.bounds.height - pdfPageBounds.minY - origin.y*self.pdfView.scaleFactor))
                         self.annotationBeingErasedPath.apply(CGAffineTransform(translationX: origin.x*self.pdfView.scaleFactor + pdfPageBounds.minX, y: self.pdfView.bounds.height - pdfPageBounds.minY - origin.y*self.pdfView.scaleFactor))
+                        print (pdfPageBounds.minY)
                         
                         // Set the class variable for the annotation, so we know to avoid setting this annotation to the PDF page until we start dealing with a different annotation
                         self.annotation = annotation
