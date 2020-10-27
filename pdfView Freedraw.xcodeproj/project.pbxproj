@@ -17,8 +17,6 @@
 		E435F0632526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */; };
 		E435F067252711E700A3BEEE /* UIBezierPath+.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F066252711E700A3BEEE /* UIBezierPath+.swift */; };
 		E4736AAB253369380010622A /* FreedrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4736AAA253369380010622A /* FreedrawExtensions.swift */; };
-		E4944F67254738C100F4CFF8 /* libPerformanceBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4944F65254738C100F4CFF8 /* libPerformanceBezier.a */; };
-		E4944F68254738C100F4CFF8 /* libClippingBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4944F66254738C100F4CFF8 /* libClippingBezier.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,9 +31,9 @@
 		E435F05F2526F7AE00A3BEEE /* blank.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = blank.pdf; sourceTree = "<group>"; };
 		E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFFreedrawGestureRecognizer.swift; sourceTree = "<group>"; };
 		E435F066252711E700A3BEEE /* UIBezierPath+.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIBezierPath+.swift"; sourceTree = "<group>"; };
+		E46711AF2548DEE600630070 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		E4736AAA253369380010622A /* FreedrawExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FreedrawExtensions.swift; sourceTree = "<group>"; };
-		E4944F65254738C100F4CFF8 /* libPerformanceBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libPerformanceBezier.a; path = ClippingBezier/Libraries/libPerformanceBezier.a; sourceTree = "<group>"; };
-		E4944F66254738C100F4CFF8 /* libClippingBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libClippingBezier.a; path = ClippingBezier/Libraries/libClippingBezier.a; sourceTree = "<group>"; };
+		E4A909642548778600C99601 /* pdfView Freedraw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "pdfView Freedraw.entitlements"; sourceTree = "<group>"; };
 		E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Bridging-Header.h"; sourceTree = "<group>"; };
 		E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Prefix.pch"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -45,8 +43,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E4944F67254738C100F4CFF8 /* libPerformanceBezier.a in Frameworks */,
-				E4944F68254738C100F4CFF8 /* libClippingBezier.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,6 +53,7 @@
 			isa = PBXGroup;
 			children = (
 				E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */,
+				E46711AF2548DEE600630070 /* Package.swift */,
 				E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */,
 				E435F0492526F73900A3BEEE /* pdfView Freedraw */,
 				E435F0482526F73900A3BEEE /* Products */,
@@ -75,6 +72,7 @@
 		E435F0492526F73900A3BEEE /* pdfView Freedraw */ = {
 			isa = PBXGroup;
 			children = (
+				E4A909642548778600C99601 /* pdfView Freedraw.entitlements */,
 				E435F04A2526F73900A3BEEE /* AppDelegate.swift */,
 				E435F04C2526F73900A3BEEE /* SceneDelegate.swift */,
 				E435F04E2526F73900A3BEEE /* ViewController.swift */,
@@ -93,8 +91,6 @@
 		E4944F64254738C100F4CFF8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				E4944F66254738C100F4CFF8 /* libClippingBezier.a */,
-				E4944F65254738C100F4CFF8 /* libPerformanceBezier.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -322,7 +318,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = "pdfView Freedraw/pdfView Freedraw.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 57682FTYCX;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/pdfView-Freedraw-Prefix.pch";
@@ -344,7 +340,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ronregev.pdfView-Freedraw";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/pdfView-Freedraw-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -356,7 +352,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_ENTITLEMENTS = "pdfView Freedraw/pdfView Freedraw.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 57682FTYCX;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/pdfView-Freedraw-Prefix.pch";
@@ -378,7 +374,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ronregev.pdfView-Freedraw";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/pdfView-Freedraw-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
