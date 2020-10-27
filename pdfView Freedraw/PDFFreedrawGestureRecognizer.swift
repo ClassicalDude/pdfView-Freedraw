@@ -111,6 +111,12 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             return
         }
         
+        // Check that the pdfView options allow for reliable functionality, and alert the developer
+        if !pdfView.autoScales || pdfView.displayMode != .singlePage || !pdfView.translatesAutoresizingMaskIntoConstraints || pdfView.contentMode != .scaleAspectFit {
+            print ("Current pdfView display options will prevent reliable functionality of PDFFreedrawGestureRecognizer. Please consult documentation. Exiting.")
+            return
+        }
+        
         // Record the fact that we got that far, to be used in touchesMoved and touchesEnded
         passedSafetyChecks = true
         
@@ -524,9 +530,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         let pdfPageBounds = self.pdfView.convert(self.currentPDFPage.bounds(for: .cropBox), from: self.currentPDFPage)
                         // Apply transformations to the annotation path from PDF annotation coordinates to UIView coordinates, taking into account the view's scale factor
                         self.annotationBeingErasedPath.apply(CGAffineTransform(scaleX: self.pdfView.scaleFactor, y: -self.pdfView.scaleFactor))
-                        //self.annotationBeingErasedPath.apply(CGAffineTransform(translationX: origin.x*self.pdfView.scaleFactor + pdfPageBounds.minX, y: self.pdfView.bounds.height - pdfPageBounds.minY - origin.y*self.pdfView.scaleFactor))
                         self.annotationBeingErasedPath.apply(CGAffineTransform(translationX: origin.x*self.pdfView.scaleFactor + pdfPageBounds.minX, y: self.pdfView.bounds.height - pdfPageBounds.minY - origin.y*self.pdfView.scaleFactor))
-                        print (pdfPageBounds.minY)
                         
                         // Set the class variable for the annotation, so we know to avoid setting this annotation to the PDF page until we start dealing with a different annotation
                         self.annotation = annotation
@@ -540,7 +544,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             
                 // Fatten the eraser and stroke its path, so that we can detect the intersection
                 // Ideally, we'll determine the stroking width according to the line width of the original annotation, and take into account the fact that its stroke is rounded
-                var strokingWidth = (self.annotation.border?.lineWidth ?? 0) / 2 * CGFloat.pi
+                var strokingWidth = (self.annotation.border?.lineWidth ?? 0) * CGFloat.pi
                 if strokingWidth == 0 { strokingWidth = 30 }
                 let eraserPath = UIBezierPath(cgPath: currentUIViewPath.cgPath.copy(strokingWithWidth: strokingWidth, lineCap: .round, lineJoin: .round, miterLimit: 0))
                 // Use Clipping Bezier to get the path difference between the annotation and the eraser
