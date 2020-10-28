@@ -16,6 +16,9 @@
 		E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */ = {isa = PBXBuildFile; fileRef = E435F05F2526F7AE00A3BEEE /* blank.pdf */; };
 		E435F0632526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */; };
 		E435F067252711E700A3BEEE /* UIBezierPath+.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F066252711E700A3BEEE /* UIBezierPath+.swift */; };
+		E46711BA25493F5B00630070 /* ClippingBezier in Resources */ = {isa = PBXBuildFile; fileRef = E46711B925493F5B00630070 /* ClippingBezier */; };
+		E46711BE25493F8700630070 /* libClippingBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E46711BC25493F8700630070 /* libClippingBezier.a */; };
+		E46711BF25493F8700630070 /* libPerformanceBezier.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E46711BD25493F8700630070 /* libPerformanceBezier.a */; };
 		E4736AAB253369380010622A /* FreedrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4736AAA253369380010622A /* FreedrawExtensions.swift */; };
 /* End PBXBuildFile section */
 
@@ -32,6 +35,9 @@
 		E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFFreedrawGestureRecognizer.swift; sourceTree = "<group>"; };
 		E435F066252711E700A3BEEE /* UIBezierPath+.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIBezierPath+.swift"; sourceTree = "<group>"; };
 		E46711AF2548DEE600630070 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		E46711B925493F5B00630070 /* ClippingBezier */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ClippingBezier; sourceTree = "<group>"; };
+		E46711BC25493F8700630070 /* libClippingBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libClippingBezier.a; path = ClippingBezier/Libraries/libClippingBezier.a; sourceTree = "<group>"; };
+		E46711BD25493F8700630070 /* libPerformanceBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libPerformanceBezier.a; path = ClippingBezier/Libraries/libPerformanceBezier.a; sourceTree = "<group>"; };
 		E4736AAA253369380010622A /* FreedrawExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FreedrawExtensions.swift; sourceTree = "<group>"; };
 		E4A909642548778600C99601 /* pdfView Freedraw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "pdfView Freedraw.entitlements"; sourceTree = "<group>"; };
 		E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -43,6 +49,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E46711BE25493F8700630070 /* libClippingBezier.a in Frameworks */,
+				E46711BF25493F8700630070 /* libPerformanceBezier.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,6 +63,7 @@
 				E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */,
 				E46711AF2548DEE600630070 /* Package.swift */,
 				E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */,
+				E46711B925493F5B00630070 /* ClippingBezier */,
 				E435F0492526F73900A3BEEE /* pdfView Freedraw */,
 				E435F0482526F73900A3BEEE /* Products */,
 				E4944F64254738C100F4CFF8 /* Frameworks */,
@@ -91,6 +100,8 @@
 		E4944F64254738C100F4CFF8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E46711BC25493F8700630070 /* libClippingBezier.a */,
+				E46711BD25493F8700630070 /* libPerformanceBezier.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -153,6 +164,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E435F0572526F73B00A3BEEE /* LaunchScreen.storyboard in Resources */,
+				E46711BA25493F5B00630070 /* ClippingBezier in Resources */,
 				E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */,
 				E435F0542526F73B00A3BEEE /* Assets.xcassets in Resources */,
 				E435F0522526F73900A3BEEE /* Main.storyboard in Resources */,
