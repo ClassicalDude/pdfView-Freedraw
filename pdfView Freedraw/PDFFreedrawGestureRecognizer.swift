@@ -217,6 +217,7 @@ class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     
                     // Eraser
                     if PDFFreedrawGestureRecognizer.type == .eraser {
+											
                         let annotations = self.pdfView?.currentPage?.annotations
                         if (annotations?.count ?? 0) > 0 {
                             for annotation in annotations! {

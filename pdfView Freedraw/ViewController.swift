@@ -13,33 +13,57 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     @IBOutlet weak var undoOutlet: UIButton!
     @IBOutlet weak var redoOutlet: UIButton!
     
-    var pdfFreedraw : PDFFreedrawGestureRecognizer!
-    
+	
+	private var _selectedStickerView:StickerView?
+	var selectedStickerView:StickerView? {
+			get {
+					return _selectedStickerView
+			}
+			set {
+					// if other sticker choosed then resign the handler
+					if _selectedStickerView != newValue {
+							if let selectedStickerView = _selectedStickerView {
+									selectedStickerView.showEditingHandlers = false
+							}
+							_selectedStickerView = newValue
+					}
+					// assign handler to new sticker added
+					if let selectedStickerView = _selectedStickerView {
+							selectedStickerView.showEditingHandlers = true
+							selectedStickerView.superview?.bringSubviewToFront(selectedStickerView)
+					}
+			}
+	}
+	
+	
+	var pdfFreedraw : PDFFreedrawGestureRecognizer!
+	let pdfView = PDFView()
     override func viewDidLoad() {
         super.viewDidLoad()
         
         // Prepare the example PDF document and PDF view
-        let pdfDocument = PDFDocument(url: Bundle.main.url(forResource: "blank", withExtension: "pdf")!)
-        let pdfView = PDFView()
+        let pdfDocument = PDFDocument(url: Bundle.main.url(forResource: "withDatesPlanner", withExtension: "pdf")!)
+      
         DispatchQueue.main.async { // Layout should be done on the main thread
         
-            pdfView.frame = self.view.frame
-            self.view.addSubview(pdfView)
-            self.view.sendSubviewToBack(pdfView)
+					self.pdfView.frame = self.view.frame
+					self.view.addSubview(self.pdfView)
+					self.view.sendSubviewToBack(self.pdfView)
             
             // autoScales must be set to true, otherwise the swipe motion will drag the canvas instead of drawing
-            pdfView.autoScales = true
-            
+					self.pdfView.autoScales = true
+					self.pdfView.displayDirection = .horizontal
+					self.pdfView.usePageViewController(true, withViewOptions: nil)
             // Deal with the page shadows that appear by default
             if #available(iOS 12.0, *) {
-                pdfView.pageShadowsEnabled = false
+							self.pdfView.pageShadowsEnabled = false
             } else {
-                pdfView.layer.borderWidth = 15 // iOS 11: hide the d*** shadow
-                pdfView.layer.borderColor = UIColor.white.cgColor
+							self.pdfView.layer.borderWidth = 15 // iOS 11: hide the d*** shadow
+							self.pdfView.layer.borderColor = UIColor.white.cgColor
             }
             
             // For iOS 11-12, the document should be loaded only after the view is in the stack. If this is called outside the DispatchQueue block, it may be executed too early
-            pdfView.document = pdfDocument
+					self.pdfView.document = pdfDocument
             
         }
         
@@ -53,7 +77,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         
         // Set the pdfView's isUserInteractionEnabled property to false, otherwise you'll end up swiping pages instead of drawing. This is also one of the conditions used by the PDFFreeDrawGestureRecognizer to execute, so you can use it to turn free drawing on and off.
         pdfView.isUserInteractionEnabled = false
-        
+			
         // Add the gesture recognizer to the superview of the PDF view
         view.addGestureRecognizer(pdfFreedraw)
         
@@ -64,6 +88,11 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         // Set the initial state of the undo and redo buttons
         freedrawUndoStateChanged()
     }
+	
+	@IBAction func toogleViewBtnPressed(_ sender: UIButton) {
+		pdfView.isUserInteractionEnabled.toggle()
+	}
+	
     
     // This function will make sure you can control gestures aimed at UIButtons
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -116,6 +145,68 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     @IBAction func redoAction(_ sender: UIButton) {
         pdfFreedraw.redoAnnotation()
     }
+	
+	@IBAction func insertPNGImage(_ sender: UIButton) {
+		let testImage = UIImageView.init(frame: CGRect.init(x: 0, y: 0, width: 100, height: 100))
+		testImage.image = UIImage(named: "S12")
+		testImage.contentMode = .scaleAspectFit
+						let stickerView3 = StickerView.init(contentView: testImage)
+						stickerView3.center = CGPoint.init(x: 150, y: 150)
+		stickerView3.setImage(UIImage.init(named: "close")!, forHandler: StickerViewHandler.close)
+		stickerView3.setImage(UIImage.init(named: "rotate")!, forHandler: StickerViewHandler.rotate)
+		stickerView3.setImage(UIImage.init(named: "flip")!, forHandler: StickerViewHandler.flip)
+		stickerView3.setImage(UIImage.init(named: "resize")!, forHandler: StickerViewHandler.resize)
+		stickerView3.showEditingHandlers = false
+		stickerView3.tag = 1
+		stickerView3.delegate = self
+		self.view.addSubview(stickerView3)
+		self.selectedStickerView = stickerView3
+	}
+	
     
 }
 
+
+extension ViewController : StickerViewDelegate {
+	func stickerViewDidBeginResizing(_ stickerView: StickerView) {
+		
+	}
+	
+	func stickerViewDidChangeResizing(_ stickerView: StickerView) {
+		
+	}
+	
+	func stickerViewDidEndResizing(_ stickerView: StickerView) {
+		self.selectedStickerView = stickerView
+	}
+	
+		func stickerViewDidTap(_ stickerView: StickerView) {
+				self.selectedStickerView = stickerView
+		}
+		
+		func stickerViewDidBeginMoving(_ stickerView: StickerView) {
+				self.selectedStickerView = stickerView
+		
+		}
+		
+		func stickerViewDidChangeMoving(_ stickerView: StickerView) {
+		}
+		
+		func stickerViewDidEndMoving(_ stickerView: StickerView) {
+			self.selectedStickerView = stickerView
+		}
+		
+		func stickerViewDidBeginRotating(_ stickerView: StickerView) {
+		}
+		func stickerViewDidChangeRotating(_ stickerView: StickerView) {
+				
+		}
+		
+		func stickerViewDidEndRotating(_ stickerView: StickerView) {
+			self.selectedStickerView = stickerView
+		}
+		
+		func stickerViewDidClose(_ stickerView: StickerView) {
+				
+		}
+}

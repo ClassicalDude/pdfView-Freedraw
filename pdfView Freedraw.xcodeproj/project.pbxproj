@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CD36DD482549082C00FA287C /* StickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD36DD472549082C00FA287C /* StickerView.swift */; };
+		CD3DBB22252DB9C60009BA66 /* withDatesPlanner.pdf in Resources */ = {isa = PBXBuildFile; fileRef = CD3DBB21252DB9C50009BA66 /* withDatesPlanner.pdf */; };
 		E435F04B2526F73900A3BEEE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F04A2526F73900A3BEEE /* AppDelegate.swift */; };
 		E435F04D2526F73900A3BEEE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F04C2526F73900A3BEEE /* SceneDelegate.swift */; };
 		E435F04F2526F73900A3BEEE /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E435F04E2526F73900A3BEEE /* ViewController.swift */; };
@@ -19,6 +21,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CD36DD472549082C00FA287C /* StickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StickerView.swift; sourceTree = "<group>"; };
+		CD3DBB21252DB9C50009BA66 /* withDatesPlanner.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = withDatesPlanner.pdf; sourceTree = "<group>"; };
 		E435F0472526F73900A3BEEE /* pdfView Freedraw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "pdfView Freedraw.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E435F04A2526F73900A3BEEE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E435F04C2526F73900A3BEEE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -64,6 +68,7 @@
 			children = (
 				E435F04A2526F73900A3BEEE /* AppDelegate.swift */,
 				E435F04C2526F73900A3BEEE /* SceneDelegate.swift */,
+				CD36DD472549082C00FA287C /* StickerView.swift */,
 				E435F04E2526F73900A3BEEE /* ViewController.swift */,
 				E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */,
 				E435F066252711E700A3BEEE /* UIBezierPath+.swift */,
@@ -71,6 +76,7 @@
 				E435F0532526F73B00A3BEEE /* Assets.xcassets */,
 				E435F0552526F73B00A3BEEE /* LaunchScreen.storyboard */,
 				E435F0582526F73B00A3BEEE /* Info.plist */,
+				CD3DBB21252DB9C50009BA66 /* withDatesPlanner.pdf */,
 				E435F05F2526F7AE00A3BEEE /* blank.pdf */,
 			);
 			path = "pdfView Freedraw";
@@ -133,6 +139,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD3DBB22252DB9C60009BA66 /* withDatesPlanner.pdf in Resources */,
 				E435F0572526F73B00A3BEEE /* LaunchScreen.storyboard in Resources */,
 				E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */,
 				E435F0542526F73B00A3BEEE /* Assets.xcassets in Resources */,
@@ -149,6 +156,7 @@
 			files = (
 				E435F067252711E700A3BEEE /* UIBezierPath+.swift in Sources */,
 				E435F04F2526F73900A3BEEE /* ViewController.swift in Sources */,
+				CD36DD482549082C00FA287C /* StickerView.swift in Sources */,
 				E435F04B2526F73900A3BEEE /* AppDelegate.swift in Sources */,
 				E435F0632526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift in Sources */,
 				E435F04D2526F73900A3BEEE /* SceneDelegate.swift in Sources */,
