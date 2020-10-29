@@ -13,7 +13,7 @@ let package = Package(
         .binaryTarget(
             name: "PDFFreedraw",
             url: "https://www.dropbox.com/s/jo792e00gmqw6rt/PDFFreedraw.xcframework.zip",
-            checksum: "34ab171fed4421f2ad29f2475586f36a20667a5b4bcf514ed6e4d629a1a2481d"
+            checksum: "f0353c8bbbcd2829a2e0a7bb32cafc0baefd1f6c7b7570d90ba3776052c32363"
         )
     ]
 )
