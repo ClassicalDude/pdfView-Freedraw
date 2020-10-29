@@ -92,6 +92,9 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         // Choose whether ink annotations will be erased as a whole, or by splitting their UIBezierPaths. The second option provides a more intuitive UX, but may have unpredictable results at times.
         pdfFreedraw.eraseInkBySplittingPaths = true
         
+        // Choose a factor for the stroke width of the eraser. The default is 1.
+        pdfFreedraw.eraserStrokeWidthFactor = 1.0
+        
         // Choose the alpha component of the highlighter type of the ink annotation
         pdfFreedraw.highlighterAlphaComponent = 0.3
         

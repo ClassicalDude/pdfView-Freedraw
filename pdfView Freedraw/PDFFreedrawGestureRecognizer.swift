@@ -48,6 +48,9 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// Bool indicating whether the eraser should try to split ink annotation paths (`true`) or delete ink annotations as whole (`false`), similarly to all other annotations
     public var eraseInkBySplittingPaths = true
     
+    /// A factor applied to the stroke width of the eraser
+    public var eraserStrokeWidthFactor : CGFloat = 1.0
+    
     public var undoDelegate : PDFFreedrawGestureRecognizerUndoDelegate?
     
     private var passedSafetyChecks = false // Used to record all of the unwrappings and conditions of touchesBegan
@@ -544,8 +547,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             
                 // Fatten the eraser and stroke its path, so that we can detect the intersection
                 // Ideally, we'll determine the stroking width according to the line width of the original annotation, and take into account the fact that its stroke is rounded
-                var strokingWidth = (self.annotation.border?.lineWidth ?? 0) * CGFloat.pi
-                if strokingWidth == 0 { strokingWidth = 30 }
+                var strokingWidth = (self.annotation.border?.lineWidth ?? 0) * CGFloat.pi * self.eraserStrokeWidthFactor
+                if strokingWidth == 0 { strokingWidth = 30 * self.eraserStrokeWidthFactor }
                 let eraserPath = UIBezierPath(cgPath: currentUIViewPath.cgPath.copy(strokingWithWidth: strokingWidth, lineCap: .round, lineJoin: .round, miterLimit: 0))
                 // Use Clipping Bezier to get the path difference between the annotation and the eraser
                 let erasedAnnotationPaths = self.annotationBeingErasedPath.difference(with: eraserPath)
