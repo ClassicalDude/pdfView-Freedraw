@@ -12,7 +12,7 @@ The class includes an undo manager and an eraser that can be used on all types o
 Special features include the ability to snap roughly-drawn ovals into perfect ovals, and a precise eraser for ink-type annotations (rather than just erasing the whole annotation in one go).
 
 ## Requirements
-- OS: iOS or iPadOS 11 or higher. Can be used on macOS through Catalyst. 
+- OS: The demo app can run on iOS or iPadOS 11 or higher. The xcframework can also be used on macOS through Catalyst. 
 - PDF document loaded through PDFKit.
 
 ## Installation
