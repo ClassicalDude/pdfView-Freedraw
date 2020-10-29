@@ -83,6 +83,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         pdfFreedraw = PDFFreedrawGestureRecognizer(color: UIColor.blue, width: 3, type: .pen)
         pdfFreedraw.delegate = self // This is for the UIGestureRecognizer delegate
         pdfFreedraw.undoDelegate = self // This is for undo history notifications, to inform button states
+        pdfFreedraw.isEnabled = true // Not necessary by default. The simplest way to turn drawing on and off.
         
         // Set the allowed number of undo actions. The default is 10
         // Choosing the number 0 will take that limit off, for as long as the class instance is allocated
@@ -94,7 +95,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         // Choose the alpha component of the highlighter type of the ink annotation
         pdfFreedraw.highlighterAlphaComponent = 0.3
         
-        // Set the pdfView's isUserInteractionEnabled property to false, otherwise you'll end up swiping pages instead of drawing. This is also one of the conditions used by the PDFFreeDrawGestureRecognizer to take over the touches recognition, so you can use it to turn free drawing on and off.
+        // Set the pdfView's isUserInteractionEnabled property to false, otherwise you'll end up swiping pages instead of drawing. This is also one of the conditions used by the PDFFreeDrawGestureRecognizer to take over the touches recognition.
         pdfView.isUserInteractionEnabled = false
         
         // Add the gesture recognizer to the *superview* of the PDF view - another condition
