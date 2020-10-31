@@ -1,4 +1,0 @@
-module pdfViewFreedraw {
-    header "/Users/ron/Project/pdfView_Freedraw/.build/x86_64-apple-macosx/debug/pdfViewFreedraw.build/pdfViewFreedraw-Swift.h"
-    requires objc
-}
