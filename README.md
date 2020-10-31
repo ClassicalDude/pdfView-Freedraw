@@ -18,7 +18,7 @@ Special features include the ability to snap roughly-drawn ovals into perfect ov
 ## Installation
 - You can explore the functionality by downloading the entire project and testing the app.
 - An xcframework is available at the [release page](https://github.com/ClassicalDude/pdfView-Freedraw/releases). It is compiled for physical devices, simulator and catalyst.
-- A swift package of the source code and the compiled xcframework is available. To add the package to your project, use the address https://github.com/ClassicalDude/pdfView-Freedraw and choose the branch SPM.
+- A swift package of the compiled xcframework is available. To add the package to your project, use the address https://github.com/ClassicalDude/pdfView-Freedraw and enter the branch SPM.
 - Using the source code in your project is possible, but can prove tricky because of dependencies, which are pre-compiled into the xcframework. Please refer to [this guide](Compilation.md) if you wish to include the source code in your project.
 
 When manually embedding the xcframework in your project, you must go the General tab of the target's settings and add it to the Frameworks, Libraries and Embedded Content section. Make sure you choose to embed and sign it:
