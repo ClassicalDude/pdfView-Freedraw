@@ -38,7 +38,6 @@
 		E435F05F2526F7AE00A3BEEE /* blank.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = blank.pdf; sourceTree = "<group>"; };
 		E435F0622526F92400A3BEEE /* PDFFreedrawGestureRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFFreedrawGestureRecognizer.swift; sourceTree = "<group>"; };
 		E435F066252711E700A3BEEE /* UIBezierPath+.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIBezierPath+.swift"; sourceTree = "<group>"; };
-		E46711AF2548DEE600630070 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		E46711B925493F5B00630070 /* ClippingBezier */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ClippingBezier; sourceTree = "<group>"; };
 		E46711BC25493F8700630070 /* libClippingBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libClippingBezier.a; path = ClippingBezier/Libraries/libClippingBezier.a; sourceTree = "<group>"; };
 		E46711BD25493F8700630070 /* libPerformanceBezier.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libPerformanceBezier.a; path = ClippingBezier/Libraries/libPerformanceBezier.a; sourceTree = "<group>"; };
@@ -69,7 +68,6 @@
 			isa = PBXGroup;
 			children = (
 				E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */,
-				E46711AF2548DEE600630070 /* Package.swift */,
 				E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */,
 				E467121D254E099400630070 /* LICENSE */,
 				E4671220254E099F00630070 /* README.md */,
