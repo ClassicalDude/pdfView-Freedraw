@@ -13,7 +13,8 @@ extension CGPoint{
 
 extension UIBezierPath{
     func moveCenter(to:CGPoint) -> Self{
-        let bound  = self.cgPath.boundingBox
+    
+        let bound = self.cgPath.boundingBox
         let center = bounds.center
         
         let zeroedTo = CGPoint(x: to.x-bound.origin.x, y: to.y-bound.origin.y)

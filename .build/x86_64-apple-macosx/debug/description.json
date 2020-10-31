@@ -1,0 +1,69 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+    "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Assets.xcassets" : {
+      "inputs" : [
+        {
+          "kind" : "directory",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/pdfView Freedraw\/Assets.xcassets"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "directory",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Assets.xcassets"
+        }
+      ]
+    },
+    "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Base.lproj\/LaunchScreen.storyboard" : {
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/pdfView Freedraw\/Base.lproj\/LaunchScreen.storyboard"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Base.lproj\/LaunchScreen.storyboard"
+        }
+      ]
+    },
+    "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Base.lproj\/Main.storyboard" : {
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/pdfView Freedraw\/Base.lproj\/Main.storyboard"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Base.lproj\/Main.storyboard"
+        }
+      ]
+    },
+    "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Info.plist" : {
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw.build\/Info.plist"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "\/Users\/ron\/Project\/pdfView_Freedraw\/.build\/x86_64-apple-macosx\/debug\/pdfViewFreedraw_pdfViewFreedraw.bundle\/Info.plist"
+        }
+      ]
+    }
+  },
+  "swiftTargetMap" : {
+    "C.pdfViewFreedraw-debug.module" : "pdfViewFreedraw"
+  },
+  "testDiscoveryCommands" : {
+
+  }
+}
