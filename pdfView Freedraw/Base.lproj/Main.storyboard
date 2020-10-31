@@ -3,7 +3,7 @@
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17125"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17126"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -17,6 +17,13 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ThM-4m-Ea6">
+                                <rect key="frame" x="133.5" y="54" width="147" height="30"/>
+                                <state key="normal" title="Disable PDFFreedraw"/>
+                                <connections>
+                                    <action selector="toggleFreedrawAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="1ct-Un-aIa"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pDG-B4-pGO">
                                 <rect key="frame" x="30" y="802" width="63" height="30"/>
                                 <constraints>
@@ -91,11 +98,13 @@
                             <constraint firstItem="AYM-6u-Gis" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="PFU-dR-Me3"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="NWQ-NA-db6" secondAttribute="trailing" constant="30" id="PNZ-JR-sc0"/>
                             <constraint firstItem="NWQ-NA-db6" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="PrM-HR-hEk"/>
+                            <constraint firstItem="ThM-4m-Ea6" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="QYd-U0-6Mf"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="pDG-B4-pGO" secondAttribute="trailing" symbolic="YES" id="d46-DA-5rD"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="RH4-Ti-PjB" secondAttribute="bottom" id="dWa-Jl-xk0"/>
                             <constraint firstItem="AYM-6u-Gis" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="RH4-Ti-PjB" secondAttribute="trailing" constant="8" symbolic="YES" id="gj9-h1-cW7"/>
                             <constraint firstItem="RH4-Ti-PjB" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="30" id="jbJ-H8-1ZA"/>
                             <constraint firstItem="pDG-B4-pGO" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="ndY-kK-C8m"/>
+                            <constraint firstItem="ThM-4m-Ea6" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="sFl-1v-u6G"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="Mwr-9q-Nzw" secondAttribute="bottom" id="t5t-z0-fWg"/>
                             <constraint firstItem="1jx-fJ-Myz" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="tWg-Q5-VrB"/>
                             <constraint firstItem="NWQ-NA-db6" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="1jx-fJ-Myz" secondAttribute="trailing" constant="8" symbolic="YES" id="tY4-Kg-AqU"/>
@@ -108,6 +117,7 @@
                         <outlet property="perfectOvalsOutlet" destination="RH4-Ti-PjB" id="1wI-fE-aQt"/>
                         <outlet property="redHighlightOutlet" destination="1jx-fJ-Myz" id="6i9-HL-cFf"/>
                         <outlet property="redoOutlet" destination="Mwr-9q-Nzw" id="YuZ-UA-17J"/>
+                        <outlet property="toggleFreedrawOutlet" destination="ThM-4m-Ea6" id="LJ1-qm-SiP"/>
                         <outlet property="undoOutlet" destination="AYM-6u-Gis" id="DCb-m5-ege"/>
                     </connections>
                 </viewController>

@@ -67,9 +67,9 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     private var erasedAnnotationPath = UIBezierPath() // A split path created from intersection of the original annotation path and the eraser gesture path
     private var originalAnnotationColor : UIColor! // Used to track the active PDF annotation color when it is hidden during the erasing process
     
-    // Undo manager undo and redo histories. Usually only one annotation is recorded in the internal array. Two are recorded only when erasing an annotation by splitting its path - the original one and the split-path one.
-    private var annotationsToUndo : [[PDFAnnotation?]] = []
-    private var annotationsToRedo : [[PDFAnnotation?]] = []
+    // Undo manager undo and redo histories. The Int refers to the page number. Usually only one annotation is recorded in the internal array. Two are recorded only when erasing an annotation by splitting its path - the original one and the split-path one.
+    private var annotationsToUndo : [Int : [[PDFAnnotation?]]] = [:]
+    private var annotationsToRedo : [Int : [[PDFAnnotation?]]] = [:]
     
     // The recomended init for using the class
     public convenience init(color: UIColor?, width: CGFloat?, type: FreedrawType?) {
@@ -79,31 +79,24 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         self.inkType = type ?? .pen
     }
     
-    // MARK: Touches Began
-    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        
-        // Perform safety checks and get the PDFView on which we will annotate
+    // Get the pdfView, pdfDocument and pdfPage for the class
+    private func getCurrentPage() -> Bool {
         if let possiblePDFViews = self.view?.subviews.filter({$0 is PDFView}) {
             if possiblePDFViews.count > 1 {
                 print ("PDFFreedrawGestureRecognizer cannot be attached to a view that has more than one PDFView as a subview")
-                return
+                return false
             } else if possiblePDFViews.count == 0 {
                 print ("PDFFreedrawGestureRecognizer must be attached to a superview of a PDFView")
-                return
+                return false
             } else {
                 pdfView = possiblePDFViews[0] as? PDFView
             }
         }
         
-        // Check if the pdfView is user interaction enabled. Set that property to false in your view controller in order to disable drawing and resume regular pdfView gestures.
-        if pdfView.isUserInteractionEnabled {
-            return
-        }
-        
         // Check that we have a valid pdfDocument
         if pdfView.document == nil {
             print ("There is no document associated with the PDF view. Exiting PDFFreedrawGestureRecognizer")
-            return
+            return false
         }
         
         // Check that we have a valid pdfPage and assign it to the class variable
@@ -111,6 +104,24 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             currentPDFPage = currentPDFPageTest
         } else {
             print ("Could not unwrap the current PDF page. Exiting PDFFreedrawGestureRecognizer")
+            return false
+        }
+        return true
+    }
+    
+    // MARK: Touches Began
+    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        // Perform safety checks and get the PDFView on which we will annotate
+        passedSafetyChecks = false
+        
+        // Verify and populate our pdfView, pdfDocument and pdfPage
+        if !getCurrentPage() {
+            return
+        }
+        
+        // Check if the pdfView is user interaction enabled. Set that property to false in your view controller in order to disable drawing and resume regular pdfView gestures.
+        if pdfView.isUserInteractionEnabled {
             return
         }
         
@@ -342,11 +353,16 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     // Usually only one annotation is recorded in the internal array. Two are recorded only when erasing an annotation by splitting its path - the original one and the split-path one.
     private func registerUndo(annotations: [PDFAnnotation?]?) {
         guard annotations != nil else { return }
-        annotationsToUndo.append(annotations!)
+        guard currentPDFPage.pageRef != nil else { return }
+        let pageNum = currentPDFPage.pageRef!.pageNumber
+        if !annotationsToUndo.keys.contains(pageNum) {
+            annotationsToUndo[pageNum] = []
+        }
+        annotationsToUndo[pageNum]?.append(annotations!)
         
         // Keep the number of entries to the limit set by the user, unless it is 0
-        if annotationsToUndo.count > maxUndoNumber && maxUndoNumber != 0 {
-            annotationsToUndo.removeFirst()
+        if annotationsToUndo[pageNum]?.count ?? 0 > maxUndoNumber && maxUndoNumber != 0 {
+            annotationsToUndo[pageNum]?.removeFirst()
         }
         // Update the delegate so it can adjust the button states
         updateUndoRedoState()
@@ -357,9 +373,12 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         registerUndo(annotations: [annotation])
     }
     
-    // Function that checks the state of the undo and redo histories, and alerts the delegate accordingly
-    private func updateUndoRedoState() {
-        if annotationsToUndo.count > 0 {
+    /// Function that checks the state of the `PDFFreedrawGestureRecognizer` undo and redo histories, and alerts the delegate accordingly
+    public func updateUndoRedoState() {
+        guard getCurrentPage() else { return }
+        guard currentPDFPage.pageRef != nil else { return }
+        let pageNum = currentPDFPage.pageRef!.pageNumber
+        if annotationsToUndo[pageNum]?.count ?? 0 > 0 {
             if canUndo == false {
                 canUndo = true
                 // The state changed. alert the delegate
@@ -372,7 +391,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 undoDelegate?.freedrawUndoStateChanged()
             }
         }
-        if annotationsToRedo.count > 0 {
+        if annotationsToRedo[pageNum]?.count ?? 0 > 0 {
             if canRedo == false {
                 canRedo = true
                 // The state changed. alert the delegate
@@ -389,7 +408,9 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     /// Undo annotations by order of creation, up to the number set by `maxUndoNumber`
     public func undoAnnotation() {
-        let lastAnnotation = annotationsToUndo.popLast()
+        guard currentPDFPage.pageRef != nil else { return }
+        let pageNum = currentPDFPage.pageRef!.pageNumber
+        let lastAnnotation = annotationsToUndo[pageNum]?.popLast()
         guard lastAnnotation != nil else { return }
         DispatchQueue.main.async {
             if lastAnnotation!.last! != nil { // nil will be the case when eraser deleted a whole annotation and did not replace it with a split-path one.
@@ -400,13 +421,18 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 self.currentPDFPage.addAnnotation(lastAnnotation!.first!!)
             }
         }
-        annotationsToRedo.append(lastAnnotation!)
+        if !annotationsToRedo.keys.contains(pageNum) {
+            annotationsToRedo[pageNum] = []
+        }
+        annotationsToRedo[pageNum]?.append(lastAnnotation!)
         updateUndoRedoState()
     }
     
     /// Redo annotations by reverse order of undoing
     public func redoAnnotation() {
-        let lastAnnotation = annotationsToRedo.popLast()
+        guard currentPDFPage.pageRef != nil else { return }
+        let pageNum = currentPDFPage.pageRef!.pageNumber
+        let lastAnnotation = annotationsToRedo[pageNum]?.popLast()
         guard lastAnnotation != nil else { return }
         DispatchQueue.main.async {
             // If this annotation entry is double, then it was created by the eraser, and the original was restored by the undo function and should now be removed
@@ -417,7 +443,10 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 self.currentPDFPage.addAnnotation(lastAnnotation!.last!!)
             }
         }
-        annotationsToUndo.append(lastAnnotation!)
+        if !annotationsToUndo.keys.contains(pageNum) {
+            annotationsToUndo[pageNum] = []
+        }
+        annotationsToUndo[pageNum]!.append(lastAnnotation!)
         updateUndoRedoState()
     }
     

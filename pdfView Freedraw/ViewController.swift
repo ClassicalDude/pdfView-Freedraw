@@ -11,12 +11,16 @@ import PDFKit
 class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedrawGestureRecognizerUndoDelegate {
     
     // Button outlets
+    @IBOutlet weak var toggleFreedrawOutlet: UIButton!
     @IBOutlet weak var blueLineOutlet: UIButton!
     @IBOutlet weak var redHighlightOutlet: UIButton!
     @IBOutlet weak var eraserOutlet: UIButton!
     @IBOutlet weak var perfectOvalsOutlet: UIButton!
     @IBOutlet weak var undoOutlet: UIButton!
     @IBOutlet weak var redoOutlet: UIButton!
+    
+    // Prepare the pdfView
+    let pdfView = PDFView()
     
     // The gesture recognizer class for drawing ink PDF annotations and erasing all annotations
     var pdfFreedraw : PDFFreedrawGestureRecognizer!
@@ -36,10 +40,11 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         
         // Prepare the example PDF document and PDF view
         let pdfDocument = PDFDocument(url: Bundle.main.url(forResource: "blank", withExtension: "pdf")!)
-        let pdfView = PDFView()
         
         // Layout: should be done on the main thread
         DispatchQueue.main.async {
+            
+            let pdfView = self.pdfView // Spares us the need to explicitly refer to "self" each time
             
             pdfView.frame = self.view.frame
             self.view.addSubview(pdfView)
@@ -52,10 +57,10 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
             pdfView.contentMode = .scaleAspectFit
             
             // A few additional options that can be useful
-            //pdfView.displayDirection = .horizontal
-            //pdfView.usePageViewController(false, withViewOptions: [:])
-            //pdfView.autoresizesSubviews = true
-            //pdfView.autoresizingMask = [.flexibleWidth, .flexibleHeight, .flexibleTopMargin, .flexibleLeftMargin]
+            pdfView.displayDirection = .horizontal
+            pdfView.usePageViewController(true, withViewOptions: [:])
+            pdfView.autoresizesSubviews = true
+            pdfView.autoresizingMask = [.flexibleWidth, .flexibleHeight, .flexibleTopMargin, .flexibleLeftMargin]
             
             // From here - options that should probably be set, and by this order, including the repeats
             // This ensures the proper scaling of the PDF page
@@ -111,6 +116,18 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         // Set the initial state of the undo and redo buttons (see functions below)
         freedrawUndoStateChanged()
         updateButtonsState()
+        
+        // Set up a notification for PDF page changes, that will in turn trigger checking the undo and redo states for button updates
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(pdfPageChanged),
+            name: NSNotification.Name.PDFViewPageChanged,
+            object: nil)
+    }
+    
+    // Update the undo and redo histories from notification
+    @objc func pdfPageChanged() {
+        pdfFreedraw.updateUndoRedoState()
     }
     
     // This function makes sure you can control gestures aimed at UIButtons
@@ -147,39 +164,55 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     }
     
     func updateButtonsState() {
-        switch pdfFreedraw.inkType {
-        case .highlighter:
-            blueLineOutlet.isSelected = false
-            redHighlightOutlet.isSelected = true
-            eraserOutlet.isSelected = false
-            if pdfFreedraw.convertClosedCurvesToOvals {
-                perfectOvalsOutlet.isSelected = true
-            } else {
+        if !pdfView.isUserInteractionEnabled { // Show controls when pdfView has no user interaction
+            view.subviews.filter({$0 is UIButton && $0 != toggleFreedrawOutlet}).forEach({$0.isHidden = false})
+            switch pdfFreedraw.inkType {
+            case .highlighter:
+                blueLineOutlet.isSelected = false
+                redHighlightOutlet.isSelected = true
+                eraserOutlet.isSelected = false
+                if pdfFreedraw.convertClosedCurvesToOvals {
+                    perfectOvalsOutlet.isSelected = true
+                } else {
+                    perfectOvalsOutlet.isSelected = false
+                }
+                perfectOvalsOutlet.isEnabled = true
+                
+            case .eraser:
+                blueLineOutlet.isSelected = false
+                redHighlightOutlet.isSelected = false
+                eraserOutlet.isSelected = true
                 perfectOvalsOutlet.isSelected = false
+                perfectOvalsOutlet.isEnabled = false
+                
+            default: // .pen
+                blueLineOutlet.isSelected = true
+                redHighlightOutlet.isSelected = false
+                eraserOutlet.isSelected = false
+                if pdfFreedraw.convertClosedCurvesToOvals {
+                    perfectOvalsOutlet.isSelected = true
+                } else {
+                    perfectOvalsOutlet.isSelected = false
+                }
+                perfectOvalsOutlet.isEnabled = true
             }
-            perfectOvalsOutlet.isEnabled = true
-            
-        case .eraser:
-            blueLineOutlet.isSelected = false
-            redHighlightOutlet.isSelected = false
-            eraserOutlet.isSelected = true
-            perfectOvalsOutlet.isSelected = false
-            perfectOvalsOutlet.isEnabled = false
-            
-        default: // .pen
-            blueLineOutlet.isSelected = true
-            redHighlightOutlet.isSelected = false
-            eraserOutlet.isSelected = false
-            if pdfFreedraw.convertClosedCurvesToOvals {
-                perfectOvalsOutlet.isSelected = true
-            } else {
-                perfectOvalsOutlet.isSelected = false
-            }
-            perfectOvalsOutlet.isEnabled = true
+        } else {
+            // Hide controls when pdfView has user interaction
+            view.subviews.filter({$0 is UIButton && $0 != toggleFreedrawOutlet}).forEach({$0.isHidden = true})
         }
     }
 
     // MARK: Button Actions
+    @IBAction func toggleFreedrawAction(_ sender: UIButton) {
+        // Toggle the drawing function
+        pdfView.isUserInteractionEnabled = !pdfView.isUserInteractionEnabled
+        if !pdfView.isUserInteractionEnabled {
+            toggleFreedrawOutlet.setTitle("Disable PDFFreedraw", for: .normal)
+        } else {
+            toggleFreedrawOutlet.setTitle("Enable PDFFreedraw", for: .normal)
+        }
+        updateButtonsState()
+    }
     
     @IBAction func blueLineAction(_ sender: UIButton) {
         pdfFreedraw.color = UIColor.blue
