@@ -95,6 +95,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         pdfFreedraw.maxUndoNumber = 5
         
         // Choose whether ink annotations will be erased as a whole, or by splitting their UIBezierPaths. The second option provides a more intuitive UX, but may have unpredictable results at times.
+        // NB: This option only applies to ink-type annotations. Stamps, widgets, etc. will be deleted as a whole in any case.
         pdfFreedraw.eraseInkBySplittingPaths = true
         
         // Choose a factor for the stroke width of the eraser. The default is 1.

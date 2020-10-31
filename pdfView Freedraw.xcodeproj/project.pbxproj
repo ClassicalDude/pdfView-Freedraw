@@ -22,6 +22,7 @@
 		E46711EE254B61BF00630070 /* demo in Resources */ = {isa = PBXBuildFile; fileRef = E46711ED254B61BF00630070 /* demo */; };
 		E467121E254E099400630070 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E467121D254E099400630070 /* LICENSE */; };
 		E4671221254E099F00630070 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = E4671220254E099F00630070 /* README.md */; };
+		E4671224254E0C0900630070 /* Compilation.md in Resources */ = {isa = PBXBuildFile; fileRef = E4671223254E0C0900630070 /* Compilation.md */; };
 		E4736AAB253369380010622A /* FreedrawExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4736AAA253369380010622A /* FreedrawExtensions.swift */; };
 /* End PBXBuildFile section */
 
@@ -44,6 +45,7 @@
 		E46711ED254B61BF00630070 /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
 		E467121D254E099400630070 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		E4671220254E099F00630070 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		E4671223254E0C0900630070 /* Compilation.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = Compilation.md; sourceTree = "<group>"; };
 		E4736AAA253369380010622A /* FreedrawExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FreedrawExtensions.swift; sourceTree = "<group>"; };
 		E4A909642548778600C99601 /* pdfView Freedraw.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "pdfView Freedraw.entitlements"; sourceTree = "<group>"; };
 		E4F4FCAE252E593000850708 /* pdfView-Freedraw-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "pdfView-Freedraw-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -71,6 +73,7 @@
 				E4F4FCB2252E5BAC00850708 /* pdfView-Freedraw-Prefix.pch */,
 				E467121D254E099400630070 /* LICENSE */,
 				E4671220254E099F00630070 /* README.md */,
+				E4671223254E0C0900630070 /* Compilation.md */,
 				E46711ED254B61BF00630070 /* demo */,
 				E46711B925493F5B00630070 /* ClippingBezier */,
 				E435F0492526F73900A3BEEE /* pdfView Freedraw */,
@@ -172,6 +175,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E4671224254E0C0900630070 /* Compilation.md in Resources */,
 				E435F0572526F73B00A3BEEE /* LaunchScreen.storyboard in Resources */,
 				E46711BA25493F5B00630070 /* ClippingBezier in Resources */,
 				E435F0602526F7AE00A3BEEE /* blank.pdf in Resources */,
