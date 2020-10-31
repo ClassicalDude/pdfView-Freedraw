@@ -19,7 +19,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     @IBOutlet weak var undoOutlet: UIButton!
     @IBOutlet weak var redoOutlet: UIButton!
     
-    // Prepare the pdfView
+    // Prepare the pdfView as a class constant
     let pdfView = PDFView()
     
     // The gesture recognizer class for drawing ink PDF annotations and erasing all annotations
@@ -58,7 +58,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
             
             // A few additional options that can be useful
             pdfView.displayDirection = .horizontal
-            pdfView.usePageViewController(true, withViewOptions: [:])
+            pdfView.usePageViewController(true, withViewOptions: [:]) // Necessary if you wish to use the pdfView's internal swipe recognizers to flip pages
             pdfView.autoresizesSubviews = true
             pdfView.autoresizingMask = [.flexibleWidth, .flexibleHeight, .flexibleTopMargin, .flexibleLeftMargin]
             
@@ -88,9 +88,9 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         pdfFreedraw = PDFFreedrawGestureRecognizer(color: UIColor.blue, width: 3, type: .pen)
         pdfFreedraw.delegate = self // This is for the UIGestureRecognizer delegate
         pdfFreedraw.undoDelegate = self // This is for undo history notifications, to inform button states
-        pdfFreedraw.isEnabled = true // Not necessary by default. The simplest way to turn drawing on and off.
+        pdfFreedraw.isEnabled = true // Not necessary by default. The simplest way to turn drawing on and off, but don't forget to turn the pdfView's isUserInteractionEnabled if you wish to restore all of its default gesture recognizers
         
-        // Set the allowed number of undo actions. The default is 10
+        // Set the allowed number of undo actions per page. The default is 10
         // Choosing the number 0 will take that limit off, for as long as the class instance is allocated
         pdfFreedraw.maxUndoNumber = 5
         
@@ -103,7 +103,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         // Choose the alpha component of the highlighter type of the ink annotation
         pdfFreedraw.highlighterAlphaComponent = 0.3
         
-        // Set the pdfView's isUserInteractionEnabled property to false, otherwise you'll end up swiping pages instead of drawing. This is also one of the conditions used by the PDFFreeDrawGestureRecognizer to take over the touches recognition.
+        // Set the pdfView's isUserInteractionEnabled property to false, otherwise you'll end up swiping pages instead of drawing. This is also one of the conditions used by the PDFFreeDrawGestureRecognizer to take over the touches recognition. Below you'll see that the "Enable/Disable" button uses this property.
         pdfView.isUserInteractionEnabled = false
         
         // Add the gesture recognizer to the *superview* of the PDF view - another condition
@@ -117,7 +117,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         freedrawUndoStateChanged()
         updateButtonsState()
         
-        // Set up a notification for PDF page changes, that will in turn trigger checking the undo and redo states for button updates
+        // Set up a notification for PDF page changes, that will in turn trigger checking the undo and redo states for button updates. This is a recommended practice, if you wish to use the undo manager.
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(pdfPageChanged),
@@ -125,7 +125,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
             object: nil)
     }
     
-    // Update the undo and redo histories from notification
+    // Update the undo and redo histories from notification above
     @objc func pdfPageChanged() {
         pdfFreedraw.updateUndoRedoState()
     }

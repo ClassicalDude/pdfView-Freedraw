@@ -33,16 +33,16 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// The alpha component of the free-draw highlighter. The default is 0.3.
     public var highlighterAlphaComponent : CGFloat = 0.3
     
-    /// The number of annotations to keep in the undo history. The default is 10.
+    /// The number of annotations per page to keep in the undo history. The default is 10.
     public var maxUndoNumber : Int = 10
     
     /// When `true`, closed and nearly-closed curves will be drawn as perfect ovals
     public var convertClosedCurvesToOvals = false
     
-    /// Bool indicating whether there are annotations that can be undone.
+    /// Bool indicating whether there are annotations that can be undone in the current page.
     public private(set) var canUndo = false
     
-    /// Bool indicating whether there are annotations that can be redone.
+    /// Bool indicating whether there are annotations that can be redone in the current page.
     public private(set) var canRedo = false
     
     /// Bool indicating whether the eraser should try to split ink annotation paths (`true`) or delete ink annotations as whole (`false`), similarly to all other annotations
@@ -79,7 +79,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         self.inkType = type ?? .pen
     }
     
-    // Get the pdfView, pdfDocument and pdfPage for the class
+    // Get the pdfView, pdfDocument and pdfPage for the class. This is called both from touchesBegan and from updateUndoRedoState. Returns true only if successful in getting all three, in which case their class variables are safe to forcibly unwrap.
     private func getCurrentPage() -> Bool {
         if let possiblePDFViews = self.view?.subviews.filter({$0 is PDFView}) {
             if possiblePDFViews.count > 1 {
@@ -95,7 +95,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         
         // Check that we have a valid pdfDocument
         if pdfView.document == nil {
-            print ("There is no document associated with the PDF view. Exiting PDFFreedrawGestureRecognizer")
+            // The next print statement should be turned off if you are using a pdf page change notification to trigger updateUndoRedoState - otherwise it will fire when you launch the app.
+            // print ("There is no document associated with the PDF view. Exiting PDFFreedrawGestureRecognizer")
             return false
         }
         
@@ -126,7 +127,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         }
         
         // Check that the pdfView options allow for reliable functionality, and alert the developer
-        if !pdfView.autoScales || pdfView.displayMode != .singlePage || !pdfView.translatesAutoresizingMaskIntoConstraints || pdfView.contentMode != .scaleAspectFit {
+        if pdfView.displayMode != .singlePage || !pdfView.translatesAutoresizingMaskIntoConstraints || pdfView.contentMode != .scaleAspectFit {
             print ("Current pdfView display options will prevent reliable functionality of PDFFreedrawGestureRecognizer. Please consult documentation. Exiting.")
             return
         }
@@ -368,7 +369,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         updateUndoRedoState()
     }
     
-    /// Registers any PDFAnnotation in the PDFFreedrawGestureRecognizer undo manager. NB: Ink annotations created by PDFFreedrawGestureRecognizer are registered automatically.
+    /// Registers any PDFAnnotation in the PDFFreedrawGestureRecognizer undo manager for the current page. NB: Ink annotations created by PDFFreedrawGestureRecognizer are registered automatically.
     public func registerInAnnotationUndoManager(annotation: PDFAnnotation) {
         registerUndo(annotations: [annotation])
     }
