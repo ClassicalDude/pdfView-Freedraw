@@ -11,9 +11,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		E435F0472526F73900A3BEEE /* pdfView Freedraw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = "pdfView Freedraw.app"; path = "/Users/ron/Project/pdfView Freedraw/build/Debug-iphoneos/pdfView Freedraw.app"; sourceTree = "<absolute>"; };
 		E435F04E2526F73900A3BEEE /* SampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleViewController.swift; sourceTree = "<group>"; };
 		E46711AF2548DEE600630070 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		E4671233254E145E00630070 /* pdfView Freedraw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "pdfView Freedraw.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E4671235254E147800630070 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		E4671236254E147800630070 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -30,8 +32,11 @@
 		E435F03E2526F73900A3BEEE = {
 			isa = PBXGroup;
 			children = (
+				E4671235254E147800630070 /* LICENSE */,
+				E4671236254E147800630070 /* README.md */,
 				E46711AF2548DEE600630070 /* Package.swift */,
 				E435F04E2526F73900A3BEEE /* SampleViewController.swift */,
+				E4671233254E145E00630070 /* pdfView Freedraw.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -52,7 +57,7 @@
 			);
 			name = "pdfView Freedraw";
 			productName = "pdfView Freedraw";
-			productReference = E435F0472526F73900A3BEEE /* pdfView Freedraw.app */;
+			productReference = E4671233254E145E00630070 /* pdfView Freedraw.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
