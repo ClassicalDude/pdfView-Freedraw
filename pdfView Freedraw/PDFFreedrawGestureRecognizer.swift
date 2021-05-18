@@ -66,6 +66,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     private var annotationBeingErasedPath = UIBezierPath() // An annotation path we are actively erasing
     private var erasedAnnotationPath = UIBezierPath() // A split path created from intersection of the original annotation path and the eraser gesture path
     private var originalAnnotationColor : UIColor! // Used to track the active PDF annotation color when it is hidden during the erasing process
+    private var firstTouchDetected : String? // Used to record the UUID of the first touch detected in touchesBegan, to prevent issues with multiple touch
+    private var isValidTouch = false // Used to in conjunction with the previous var to record the validity of the touch between touchesBegan, touchesMoved and touchesEnded
     
     // Undo manager undo and redo histories. The Int refers to the page number. Usually only one annotation is recorded in the internal array. Two are recorded only when erasing an annotation by splitting its path - the original one and the split-path one.
     private var annotationsToUndo : [Int : [[PDFAnnotation?]]] = [:]
@@ -136,7 +138,10 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         passedSafetyChecks = true
         
         // Deal with the touch gesture
-        if let touch = touches.first {
+        if let touch = event?.allTouches?.first, event!.allTouches!.count == 1 {
+            // Record the first touch's uuid
+            firstTouchDetected = String(format: "%p", touch)
+            isValidTouch = false
             
             DispatchQueue.main.async { // Anything that requires drawing on screen should happen on the main thread
                 
@@ -174,16 +179,20 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             return
         }
         
-        if let touch = touches.first {
+        if let touch = event?.allTouches?.filter({String(format: "%p", $0)==self.firstTouchDetected}).first {
             
             DispatchQueue.main.async {
                 
                 // Test for minimal viable distance to register the move
                 let currentLocation = touch.location(in: self.pdfView) // Current finger location on screen
-                let vector = currentLocation.vector(to: self.startLocation!)
-                self.totalDistance += sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
-                if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
-                    return
+                if self.isValidTouch == false {
+                    let vector = currentLocation.vector(to: self.startLocation!)
+                    self.totalDistance += sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
+                    if self.totalDistance < 10.0 { // change the "10.0" to your value of choice if you wish to change the minimal viable distance
+                        return
+                    } else {
+                        self.isValidTouch = true
+                    }
                 }
                 
                 // Reset redo history after the touches started moving
@@ -259,7 +268,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             return
         }
         
-        if let touch = touches.first {
+        if let touch = touches.filter({String(format: "%p", $0)==self.firstTouchDetected}).first {
             DispatchQueue.main.async {
                 
                 // Test for minimal viable distance to register the move
@@ -346,6 +355,14 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 }
             }
         }
+    }
+    
+    // MARK: Touches Cancelled
+    
+    public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
+        self.viewPath.removeAllPoints()
+        self.signingPath.removeAllPoints()
+        self.removeDrawVeil()
     }
     
     // MARK: Undo Manager
