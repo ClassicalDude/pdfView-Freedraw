@@ -12,8 +12,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "PDFFreedraw",
-            url: "https://github.com/ClassicalDude/pdfView-Freedraw/releases/download/v1.1/PDFFreedraw.xcframework.zip",
-            checksum: "fc5fd61c2b71c10c78bddd5b5bf763e31ce7177fabdbacb89c59eb5e3e4b6f1c"
+            url: "https://github.com/ClassicalDude/pdfView-Freedraw/releases/download/v1.0/PDFFreedraw.xcframework.zip",
+            checksum: "6b0987263d1e90988d3a69b0b8219deac592ad0b39b5c68171cc05af6f0be152"
         )
     ]
 )
