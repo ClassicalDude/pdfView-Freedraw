@@ -8,7 +8,7 @@
 import UIKit
 import PDFKit
 
-class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedrawGestureRecognizerUndoDelegate {
+class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedrawGestureRecognizerDelegate {
     
     // Button outlets
     @IBOutlet weak var toggleFreedrawOutlet: UIButton!
@@ -87,7 +87,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         // Define the gesture recognizer. You can use a default initializer for a narrow red pen
         pdfFreedraw = PDFFreedrawGestureRecognizer(color: UIColor.blue, width: 3, type: .pen)
         pdfFreedraw.delegate = self // This is for the UIGestureRecognizer delegate
-        pdfFreedraw.undoDelegate = self // This is for undo history notifications, to inform button states
+        pdfFreedraw.freedrawDelegate = self // This is for undo history notifications, to inform button states
         pdfFreedraw.isEnabled = true // Not necessary by default. The simplest way to turn drawing on and off, but don't forget to turn the pdfView's isUserInteractionEnabled if you wish to restore all of its default gesture recognizers
         
         // Set the allowed number of undo actions per page. The default is 10
@@ -148,9 +148,21 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         return false
     }
     
+    // MARK: Drawing Status
+    
+    // This is the protocol stub of PDFFreedrawGestureRecognizerDelegate, which is triggered whenever a drawing or erasing action of the PDFFreedrawGestureRecognizer class starts or stops
+    func freedrawStateChanged(isDrawing: Bool) {
+//        switch isDrawing {
+//        case true:
+//            print ("Started drawing")
+//        case false:
+//            print ("Stopped drawing")
+//        }
+    }
+    
     // MARK: Button States
     
-    // This is the protocol stub of PDFFreedrawGestureRecognizerUndoDelegate, which is triggered whenever there is a change in canUndo or canRedo properties of the PDFFreedrawGestureRecognizer class
+    // This is the protocol stub of PDFFreedrawGestureRecognizerDelegate, which is triggered whenever there is a change in canUndo or canRedo properties of the PDFFreedrawGestureRecognizer class
     func freedrawUndoStateChanged() {
         if pdfFreedraw.canUndo {
             undoOutlet.isEnabled = true
@@ -247,4 +259,3 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         updateButtonsState()
     }
 }
-
