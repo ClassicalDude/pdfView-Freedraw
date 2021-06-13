@@ -10,8 +10,9 @@ import PDFKit
 //import ClippingBezier
 //import PerformanceBezier
 
-/// A protocol that allows delegates of `PDFFreedrawGestureRecognizer` to respond to changes in the undo state of the class object.
-public protocol PDFFreedrawGestureRecognizerUndoDelegate {
+/// A protocol that allows delegates of `PDFFreedrawGestureRecognizer` to respond to changes in the drawing state and the undo state of the class object.
+public protocol PDFFreedrawGestureRecognizerDelegate {
+    func freedrawStateChanged(isDrawing: Bool)
     func freedrawUndoStateChanged()
 }
 
@@ -51,7 +52,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// A factor applied to the stroke width of the eraser
     public var eraserStrokeWidthFactor : CGFloat = 1.0
     
-    public var undoDelegate : PDFFreedrawGestureRecognizerUndoDelegate?
+    public var freedrawDelegate : PDFFreedrawGestureRecognizerDelegate?
     
     private var passedSafetyChecks = false // Used to record all of the unwrappings and conditions of touchesBegan
     private var drawVeil = UIView() // Used for temporary canvas drawing on a CAShapeLayer during touchesMoved
@@ -168,6 +169,9 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 // Clear and initialize the UIBezierPath for the CAShapeLayer we will use during touchesMoved
                 self.viewPath = UIBezierPath()
                 self.viewPath.move(to: self.startLocation!)
+                
+                // Alert the delegate that drawing has commenced
+                self.freedrawDelegate?.freedrawStateChanged(isDrawing: true)
             }
         }
     }
@@ -265,6 +269,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         if !passedSafetyChecks {
+            // Alert the delegate that drawing has ended
+            self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
             return
         }
         
@@ -280,6 +286,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.viewPath.removeAllPoints()
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
+                    // Alert the delegate that drawing has ended
+                    self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
                     return
                 }
                 
@@ -294,6 +302,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.viewPath.removeAllPoints()
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
+                    // Alert the delegate that drawing has ended
+                    self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
                     return
                 }
                 
@@ -353,7 +363,12 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.removeDrawVeil()
                     self.viewPath.removeAllPoints()
                 }
+                // Alert the delegate that drawing has ended
+                self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
             }
+        } else {
+            // Alert the delegate that drawing has ended
+            self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
         }
     }
     
@@ -363,6 +378,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         self.viewPath.removeAllPoints()
         self.signingPath.removeAllPoints()
         self.removeDrawVeil()
+        // Alert the delegate that drawing has ended
+        self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
     }
     
     // MARK: Undo Manager
@@ -400,26 +417,26 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             if canUndo == false {
                 canUndo = true
                 // The state changed. alert the delegate
-                undoDelegate?.freedrawUndoStateChanged()
+                freedrawDelegate?.freedrawUndoStateChanged()
             }
         } else {
             if canUndo == true {
                 canUndo = false
                 // The state changed. alert the delegate
-                undoDelegate?.freedrawUndoStateChanged()
+                freedrawDelegate?.freedrawUndoStateChanged()
             }
         }
         if annotationsToRedo[pageNum]?.count ?? 0 > 0 {
             if canRedo == false {
                 canRedo = true
                 // The state changed. alert the delegate
-                undoDelegate?.freedrawUndoStateChanged()
+                freedrawDelegate?.freedrawUndoStateChanged()
             }
         } else {
             if canRedo == true {
                 canRedo = false
                 // The state changed. alert the delegate
-                undoDelegate?.freedrawUndoStateChanged()
+                freedrawDelegate?.freedrawUndoStateChanged()
             }
         }
     }
