@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17156" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="18122" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17126"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="18093"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -24,6 +24,12 @@
                                     <action selector="toggleFreedrawAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="1ct-Un-aIa"/>
                                 </connections>
                             </button>
+                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" alpha="0.5" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Drawing" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0BD-oS-Go8">
+                                <rect key="frame" x="176" y="89" width="62.5" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" systemColor="systemRedColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pDG-B4-pGO">
                                 <rect key="frame" x="30" y="802" width="63" height="30"/>
                                 <constraints>
@@ -99,9 +105,11 @@
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="NWQ-NA-db6" secondAttribute="trailing" constant="30" id="PNZ-JR-sc0"/>
                             <constraint firstItem="NWQ-NA-db6" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="PrM-HR-hEk"/>
                             <constraint firstItem="ThM-4m-Ea6" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="QYd-U0-6Mf"/>
+                            <constraint firstItem="0BD-oS-Go8" firstAttribute="top" secondItem="ThM-4m-Ea6" secondAttribute="bottom" constant="5" id="b6P-bZ-rzV"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="pDG-B4-pGO" secondAttribute="trailing" symbolic="YES" id="d46-DA-5rD"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="RH4-Ti-PjB" secondAttribute="bottom" id="dWa-Jl-xk0"/>
                             <constraint firstItem="AYM-6u-Gis" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="RH4-Ti-PjB" secondAttribute="trailing" constant="8" symbolic="YES" id="gj9-h1-cW7"/>
+                            <constraint firstItem="0BD-oS-Go8" firstAttribute="centerX" secondItem="ThM-4m-Ea6" secondAttribute="centerX" id="jaN-D8-S3r"/>
                             <constraint firstItem="RH4-Ti-PjB" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="30" id="jbJ-H8-1ZA"/>
                             <constraint firstItem="pDG-B4-pGO" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-30" id="ndY-kK-C8m"/>
                             <constraint firstItem="ThM-4m-Ea6" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="sFl-1v-u6G"/>
@@ -113,6 +121,7 @@
                     </view>
                     <connections>
                         <outlet property="blueLineOutlet" destination="pDG-B4-pGO" id="JvT-vh-qBT"/>
+                        <outlet property="drawingOutlet" destination="0BD-oS-Go8" id="qJf-Xm-YXG"/>
                         <outlet property="eraserOutlet" destination="NWQ-NA-db6" id="qBD-c9-eJO"/>
                         <outlet property="perfectOvalsOutlet" destination="RH4-Ti-PjB" id="1wI-fE-aQt"/>
                         <outlet property="redHighlightOutlet" destination="1jx-fJ-Myz" id="6i9-HL-cFf"/>

@@ -16,6 +16,11 @@ public protocol PDFFreedrawGestureRecognizerDelegate {
     func freedrawUndoStateChanged()
 }
 
+// This extension makes the freedrawStateChanged function an optional one by giving a default value
+extension PDFFreedrawGestureRecognizerDelegate {
+    func freedrawStateChanged(isDrawing: Bool) { }
+}
+
 /// A UIGestureRecognizer class for free-drawing ink PDF annotations and erasing all annotations.
 public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     /// The color used by the free-draw annotation. The default is red.
@@ -143,6 +148,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             // Record the first touch's uuid
             firstTouchDetected = String(format: "%p", touch)
             isValidTouch = false
+            // Alert the delegate that drawing has commenced
+            freedrawDelegate?.freedrawStateChanged(isDrawing: true)
             
             DispatchQueue.main.async { // Anything that requires drawing on screen should happen on the main thread
                 
@@ -169,9 +176,6 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 // Clear and initialize the UIBezierPath for the CAShapeLayer we will use during touchesMoved
                 self.viewPath = UIBezierPath()
                 self.viewPath.move(to: self.startLocation!)
-                
-                // Alert the delegate that drawing has commenced
-                self.freedrawDelegate?.freedrawStateChanged(isDrawing: true)
             }
         }
     }
@@ -268,9 +272,9 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     // MARK: Touches Ended
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // Alert the delegate that drawing has ended
+        freedrawDelegate?.freedrawStateChanged(isDrawing: false)
         if !passedSafetyChecks {
-            // Alert the delegate that drawing has ended
-            self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
             return
         }
         
@@ -286,8 +290,6 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.viewPath.removeAllPoints()
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
-                    // Alert the delegate that drawing has ended
-                    self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
                     return
                 }
                 
@@ -302,8 +304,6 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.viewPath.removeAllPoints()
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
-                    // Alert the delegate that drawing has ended
-                    self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
                     return
                 }
                 
@@ -363,23 +363,18 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.removeDrawVeil()
                     self.viewPath.removeAllPoints()
                 }
-                // Alert the delegate that drawing has ended
-                self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
             }
-        } else {
-            // Alert the delegate that drawing has ended
-            self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
         }
     }
     
     // MARK: Touches Cancelled
     
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
+        // Alert the delegate that drawing has ended
+        freedrawDelegate?.freedrawStateChanged(isDrawing: false)
         self.viewPath.removeAllPoints()
         self.signingPath.removeAllPoints()
         self.removeDrawVeil()
-        // Alert the delegate that drawing has ended
-        self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
     }
     
     // MARK: Undo Manager
