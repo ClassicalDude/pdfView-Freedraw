@@ -7,6 +7,7 @@
 
 import UIKit
 import PDFKit
+import PDFFreedraw
 
 class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedrawGestureRecognizerDelegate {
     
@@ -18,6 +19,7 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     @IBOutlet weak var perfectOvalsOutlet: UIButton!
     @IBOutlet weak var undoOutlet: UIButton!
     @IBOutlet weak var redoOutlet: UIButton!
+    @IBOutlet weak var drawingOutlet: UILabel!
     
     // Prepare the pdfView as a class constant
     let pdfView = PDFView()
@@ -150,14 +152,14 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
     
     // MARK: Drawing Status
     
-    // This is the protocol stub of PDFFreedrawGestureRecognizerDelegate, which is triggered whenever a drawing or erasing action of the PDFFreedrawGestureRecognizer class starts or stops
+    // This is an optional protocol stub of PDFFreedrawGestureRecognizerDelegate, which is triggered whenever a drawing or erasing action of the PDFFreedrawGestureRecognizer class starts or stops
     func freedrawStateChanged(isDrawing: Bool) {
-//        switch isDrawing {
-//        case true:
-//            print ("Started drawing")
-//        case false:
-//            print ("Stopped drawing")
-//        }
+        switch isDrawing {
+        case true:
+            DispatchQueue.main.async { self.drawingOutlet.isHidden = false }
+        case false:
+            DispatchQueue.main.async { self.drawingOutlet.isHidden = true }
+        }
     }
     
     // MARK: Button States
