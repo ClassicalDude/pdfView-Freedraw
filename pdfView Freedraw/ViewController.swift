@@ -91,6 +91,10 @@ class ViewController: UIViewController, UIGestureRecognizerDelegate, PDFFreedraw
         pdfFreedraw.freedrawDelegate = self // This is for undo history notifications, to inform button states
         pdfFreedraw.isEnabled = true // Not necessary by default. The simplest way to turn drawing on and off, but don't forget to turn the pdfView's isUserInteractionEnabled if you wish to restore all of its default gesture recognizers
         
+        pdfFreedraw.disablePDFViewChecks = false // False is the default. PDFFreedraw checks the PDFView for certain conditions: pdfView.displayMode != .singlePage, !pdfView.translatesAutoresizingMaskIntoConstraints and pdfView.contentMode != .scaleAspectFit. These help prevent unexpected behavior. Set this to true if you cannot meet these conditions, but be sure to do a lot of QA.
+        
+        pdfFreedraw.storeCurvedAnnotationPathsInMetadata = true // As of iOS14 and iPadOS14, PDFKit does not load saved curved annotation paths properly: all addCurve segments of the path are replaced with addLine. Note that while you are creating annotations everything is working well; the problem manifests when you open a previously-saved file with curved annotations. Setting this variable to true will store a json string of the original path in the annotation's "/Content" key of its metadata dictionary, to be recovered automatically by the class' PDFAnnotation.getAnnotationPath() function.
+        
         // Set the allowed number of undo actions per page. The default is 10
         // Choosing the number 0 will take that limit off, for as long as the class instance is allocated
         pdfFreedraw.maxUndoNumber = 5

@@ -7,8 +7,8 @@
 
 import UIKit
 import PDFKit
-//import ClippingBezier
-//import PerformanceBezier
+//import ClippingBezier // to be used when building framework
+//import PerformanceBezier // to be used when building framework
 
 /// A protocol that allows delegates of `PDFFreedrawGestureRecognizer` to respond to changes in the drawing state and the undo state of the class object.
 public protocol PDFFreedrawGestureRecognizerDelegate {
@@ -56,6 +56,12 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     
     /// A factor applied to the stroke width of the eraser
     public var eraserStrokeWidthFactor : CGFloat = 1.0
+    
+    /// Setting this to `true` will allow the class to function when `pdfView.displayMode != .singlePage`, `!pdfView.translatesAutoresizingMaskIntoConstraints` and `pdfView.contentMode != .scaleAspectFit` - this is not recommended
+    public var disablePDFViewChecks = false
+    
+    /// As of iOS14 and iPadOS14, PDFKit does not load saved curved annotation paths properly. Setting this variable to `true` will store a copy of the original path in the annotation's `/Content` key of its metadata dictionary, to be recovered by `Annotation.getPath()`
+    public var storeCurvedAnnotationPathsInMetadata = false
     
     public var freedrawDelegate : PDFFreedrawGestureRecognizerDelegate?
     
@@ -135,8 +141,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         }
         
         // Check that the pdfView options allow for reliable functionality, and alert the developer
-        if pdfView.displayMode != .singlePage || !pdfView.translatesAutoresizingMaskIntoConstraints || pdfView.contentMode != .scaleAspectFit {
-            print ("Current pdfView display options will prevent reliable functionality of PDFFreedrawGestureRecognizer. Please consult documentation. Exiting.")
+        if !disablePDFViewChecks && (pdfView.displayMode != .singlePage || !pdfView.translatesAutoresizingMaskIntoConstraints || pdfView.contentMode != .scaleAspectFit) {
+            print ("Current pdfView display options will prevent reliable functionality of PDFFreedrawGestureRecognizer. Please consult documentation. You can set the disablePDFViewChecks variable to true to continue anyway. Exiting.")
             return
         }
         
@@ -148,8 +154,6 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             // Record the first touch's uuid
             firstTouchDetected = String(format: "%p", touch)
             isValidTouch = false
-            // Alert the delegate that drawing has commenced
-            freedrawDelegate?.freedrawStateChanged(isDrawing: true)
             
             DispatchQueue.main.async { // Anything that requires drawing on screen should happen on the main thread
                 
@@ -200,6 +204,8 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                         return
                     } else {
                         self.isValidTouch = true
+                        // Alert the delegate that drawing has commenced
+                        self.freedrawDelegate?.freedrawStateChanged(isDrawing: true)
                     }
                 }
                 
@@ -272,9 +278,9 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
     // MARK: Touches Ended
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // Alert the delegate that drawing has ended
-        freedrawDelegate?.freedrawStateChanged(isDrawing: false)
         if !passedSafetyChecks {
+            // Alert the delegate that drawing has ended
+            freedrawDelegate?.freedrawStateChanged(isDrawing: false)
             return
         }
         
@@ -328,12 +334,16 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.drawErasedAnnotation() // This function sets an annotation path split by the eraser as new PDF annotation, replacing the original one
                     
                     self.viewPath.removeAllPoints()
+                    
+                    // Alert the delegate that drawing has ended
+                    self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
 
                 } else {
                     
                     // Check if we created a circle. If we did, and the class variable for this is true, get a revised path. The default ovalIn UIBezierPath init creates a closed path, which cannot be split by other paths
-                    if self.convertClosedCurvesToOvals, self.signingPath.resemblesOval(), self.inkType != .eraser {
-                        self.signingPath = UIBezierPath(openOvalIn: rect)
+                    if self.convertClosedCurvesToOvals, self.signingPath.resemblesOval(strokeWidth: self.width), self.inkType != .eraser {
+                        let rectForOval = CGRect(x: rect.minX+self.width/2, y: rect.minY+self.width/2, width: rect.width-self.width, height: rect.height-self.width)
+                        self.signingPath = UIBezierPath(openOvalIn: rectForOval)
                     }
                     
                     // Create the annotation we will save
@@ -358,12 +368,21 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     self.currentPDFPage.addAnnotation(self.annotation)
                     // Add the annotation to the undo manager
                     self.registerUndo(annotations: [self.annotation])
+                    // Store the annotation's path in its metadata dictionary if it includes curved (iOS bug)
+                    if self.storeCurvedAnnotationPathsInMetadata {
+                        self.annotation.setCurvedPathInContents()
+                    }
                     
                     // Remove the UIView for the CAShapeLayer
                     self.removeDrawVeil()
                     self.viewPath.removeAllPoints()
+                    // Alert the delegate that drawing has ended
+                    self.freedrawDelegate?.freedrawStateChanged(isDrawing: false)
                 }
             }
+        } else {
+            // Alert the delegate that drawing has ended
+            freedrawDelegate?.freedrawStateChanged(isDrawing: false)
         }
     }
     
@@ -480,6 +499,13 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
         updateUndoRedoState()
     }
     
+    /// Reset annotation undo and redo history
+    public func resetAnnotationUndoRedoHistory() {
+        annotationsToUndo.removeAll()
+        annotationsToRedo.removeAll()
+        updateUndoRedoState()
+    }
+    
     // MARK: Eraser
     
     private func erase(rect: CGRect, pointInPage: CGPoint, currentUIViewPath: UIBezierPath) {
@@ -529,7 +555,6 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
                     if !erasedPath.isEmpty { // Necessary precaution
                         erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
-                        _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
                         
                         // Make sure the userName metadata field of the annotation records the same freedraw ink type as the original annotation
                         var inkTypeToRecord : FreedrawType = .pen
@@ -540,23 +565,18 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                             inkTypeToRecord = .pen
                         }
                         
-                        // Restore the original annotation color and append the annotation to the undo manager array. The annotation was made transparent before, when we started erasing it on a CAShapeLayer (see below).
-                        // NB: The restored color doesn't have enough time to be drawn on screen before the annotation is removed from the page altogether.
-                        self.annotation.color = self.originalAnnotationColor
-                        annotationsForUndo.append(self.annotation)
+                        // Get the bounds for the new annotation, taking into account the stroke width
+                        let replacementAnnotationBounds = self.pdfView.convert(CGRect(x: self.erasedAnnotationPath.bounds.minX-self.width/2, y: self.erasedAnnotationPath.bounds.minY-self.width/2, width: self.erasedAnnotationPath.bounds.width+self.width, height: self.erasedAnnotationPath.bounds.height+self.width), to: self.currentPDFPage)
+                        
+                        // Move the path to the center of the bounds
+                        _ = erasedPath.moveCenter(to: replacementAnnotationBounds.center)
                         
                         // Populate the replacement annotation
-                        replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
+                        replacementAnnotation = PDFAnnotation(bounds: replacementAnnotationBounds, forType: .ink, withProperties: nil)
                         replacementAnnotation?.add(erasedPath)
                         replacementAnnotation?.border = self.annotation.border
                         replacementAnnotation?.color = self.originalAnnotationColor
                         replacementAnnotation?.userName = "\(inkTypeToRecord)"
-                        
-                        // Add the replacement annotation to the undo manager array and push both original and replacement to the undo manager
-                        if let replacementAnnotationUnwrapped = replacementAnnotation {
-                            annotationsForUndo.append(replacementAnnotationUnwrapped)
-                            self.registerUndo(annotations: annotationsForUndo)
-                        }
                     }
                     
                     // Remove the original annotation from the page
@@ -565,6 +585,24 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     // If the replacement annotation is valid, add it to the page
                     if !erasedPath.isEmpty && replacementAnnotation != nil {
                         self.currentPDFPage.addAnnotation(replacementAnnotation!)
+                        replacementAnnotation?.setCurvedPathInContents()
+                    }
+                    
+                    if !erasedPath.isEmpty { // Must continue the same condition from before
+                        // Restore the original annotation color and append the annotation to the undo manager array. The annotation was made transparent before, when we started erasing it on a CAShapeLayer (see below).
+                        self.annotation.color = self.originalAnnotationColor
+                        // Replace the path because of the iOS bug
+                        if let replacementPath = self.annotation.getAnnotationPath(), let pathToRemove = self.annotation.paths?.first {
+                            self.annotation.remove(pathToRemove)
+                            self.annotation.add(replacementPath)
+                        }
+                        annotationsForUndo.append(self.annotation)
+                        
+                        // Add the replacement annotation to the undo manager array and push both original and replacement to the undo manager
+                        if let replacementAnnotationUnwrapped = replacementAnnotation {
+                            annotationsForUndo.append(replacementAnnotationUnwrapped)
+                            self.registerUndo(annotations: annotationsForUndo)
+                        }
                     }
                     
                     // Clear the paths of both the original annotation and the replacement annotation
@@ -584,7 +622,7 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                 if self.annotationBeingErasedPath.isEmpty {
                     
                     // Read the original annotation path, unwrap it, assign it to the class variable
-                    if let annotationPathUnwrapped = annotation.paths?.first {
+                    if let annotationPathUnwrapped = annotation.getAnnotationPath() {
                         self.annotationBeingErasedPath = annotationPathUnwrapped.copy() as! UIBezierPath
                         // Get annotation rect origin, converted to UIView coordinates
                         let origin = self.pdfView.superview!.convert(annotation.bounds.origin, from: self.pdfView)
@@ -658,7 +696,6 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
             let erasedPath = self.erasedAnnotationPath.copy() as! UIBezierPath
             if !erasedPath.isEmpty {
                 erasedPath.apply(CGAffineTransform(scaleX: 1/self.pdfView.scaleFactor, y: -1/self.pdfView.scaleFactor))
-                _ = erasedPath.moveCenter(to: erasedPath.bounds.center)
             
                 var inkTypeToRecord : FreedrawType = .pen
                 switch self.annotation.userName {
@@ -668,28 +705,44 @@ public class PDFFreedrawGestureRecognizer: UIGestureRecognizer {
                     inkTypeToRecord = .pen
                 }
                 
-                // Restore the original annotation color and append the annotation to the undo manager
-                self.annotation.color = self.originalAnnotationColor
-                annotationsForUndo.append(self.annotation)
+                // Get the bounds for the new annotation, taking into account the stroke width
+                let replacementAnnotationBounds = self.pdfView.convert(CGRect(x: self.erasedAnnotationPath.bounds.minX-self.width/2, y: self.erasedAnnotationPath.bounds.minY-self.width/2, width: self.erasedAnnotationPath.bounds.width+self.width, height: self.erasedAnnotationPath.bounds.height+self.width), to: self.currentPDFPage)
+                
+                // Move the path to the center of the bounds
+                _ = erasedPath.moveCenter(to: replacementAnnotationBounds.center)
                 
                 // Populate the replacement annotation
-                replacementAnnotation = PDFAnnotation(bounds: self.pdfView.convert(self.erasedAnnotationPath.bounds, to: self.currentPDFPage), forType: .ink, withProperties: nil)
+                replacementAnnotation = PDFAnnotation(bounds: replacementAnnotationBounds, forType: .ink, withProperties: nil)
                 replacementAnnotation?.add(erasedPath)
                 replacementAnnotation?.border = self.annotation.border
-                replacementAnnotation?.color = self.annotation.color
+                replacementAnnotation?.color = self.originalAnnotationColor
                 replacementAnnotation?.userName = "\(inkTypeToRecord)"
-                if let replacementAnnotationUnwrapped = replacementAnnotation {
-                    annotationsForUndo.append(replacementAnnotationUnwrapped)
-                    self.registerUndo(annotations: annotationsForUndo)
-                }
-            
+                
                 // Remove the original annotation from the page
                 self.currentPDFPage.removeAnnotation(self.annotation)
                 
                 // Add the replacement annotation to the page
                 if !erasedPath.isEmpty && replacementAnnotation != nil {
                     self.currentPDFPage.addAnnotation(replacementAnnotation!)
+                    replacementAnnotation?.setCurvedPathInContents()
                 }
+                
+                // Restore the original annotation color and append the annotation to the undo manager
+                self.annotation.color = self.originalAnnotationColor
+                // Replace the path because of the iOS bug
+                if let replacementPath = self.annotation.getAnnotationPath(), let pathToRemove = self.annotation.paths?.first {
+                    self.annotation.remove(pathToRemove)
+                    self.annotation.add(replacementPath)
+                }
+                annotationsForUndo.append(self.annotation)
+                
+                // Append the replacement annotation to the undo manager
+                if let replacementAnnotationUnwrapped = replacementAnnotation {
+                    annotationsForUndo.append(replacementAnnotationUnwrapped)
+                    self.registerUndo(annotations: annotationsForUndo)
+                }
+                
+                
             } else {
                 // This should not be reached - just a safety measure to restore last viable annotation
                 self.annotation.color = self.originalAnnotationColor

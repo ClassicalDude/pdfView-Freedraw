@@ -7,6 +7,7 @@
 
 import UIKit
 import PDFKit
+//import ClippingBezier // to be used when building framework
 
 extension UIBezierPath {
     
@@ -110,11 +111,11 @@ extension UIBezierPath {
     }
     
     /// Indicates whether a manually drawn Bézier path resembles an oval. Dependent on the Clipping Bézier library.
-    func resemblesOval() -> Bool {
+    func resemblesOval(strokeWidth: CGFloat) -> Bool {
         
         // Get the distance between the path's start and end point
         let vector = self.firstPoint().vector(to: self.lastPoint())
-        let distance = sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))
+        let distance = (sqrt(pow(vector.dx, 2) + pow(vector.dy, 2))) / strokeWidth
         if distance > 10 {
             return false
         }
@@ -161,8 +162,8 @@ extension PDFAnnotation {
     func hitTest(pdfView: PDFView, pointInPage: CGPoint) -> Bool? {
         guard self.type == "Ink" else { return nil }
         if let boundingRectOrigin = pdfView.superview?.convert(self.bounds.origin, from: pdfView) {
-            if let annotationPaths = self.paths {
-                if let translatedPath = UIBezierPath(originalPath: annotationPaths.first, translatedByPoint: boundingRectOrigin)?.cgPath.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0) {
+            if let annotationPath = self.getAnnotationPath() {
+                if let translatedPath = UIBezierPath(originalPath: annotationPath, translatedByPoint: boundingRectOrigin)?.cgPath.copy(strokingWithWidth: 10.0, lineCap: .round, lineJoin: .round, miterLimit: 0) {
                     if translatedPath.contains(pointInPage) {
                         return true
                     } else {
@@ -179,6 +180,105 @@ extension PDFAnnotation {
         } else {
             print ("PDFAnnotation hit test: could not get the annotation's bounding rect on the PDF view")
             return nil
+        }
+    }
+    
+    // Structs that support storing a curved annotation path in the annotation metadata
+    private struct swAnnotationPathElement : Codable {
+        var type: String?
+        var point: CGPoint?
+        var controlPoint: CGPoint?
+        var controlPoint1: CGPoint?
+        var controlPoint2: CGPoint?
+    }
+    private struct swAnnotationPath : Codable {
+        var path: [swAnnotationPathElement]?
+    }
+    /// Store the annotation path in the `/Contents` key of the annotation's metadata dictionary. This is needed due to a PDFKit bug that prevents a PDFDocument from properly loading the paths of curved annotations
+    func setCurvedPathInContents() {
+        guard self.paths != nil, self.paths!.count == 1 else { return }
+        let annotationPathElements = self.paths!.first?.getPathElements()
+        guard annotationPathElements != nil else { return }
+        
+        var annotationShouldBeSaved = false
+        var annotationPath = swAnnotationPath()
+        annotationPath.path = []
+        for pathElement in annotationPathElements! {
+            if pathElement.controlPoint != nil ||
+                pathElement.controlPoint1 != nil ||
+                pathElement.controlPoint2 != nil {
+                annotationShouldBeSaved = true
+            }
+                
+            let currentPathElement = swAnnotationPathElement(type: pathElement.type, point: pathElement.point, controlPoint: pathElement.controlPoint, controlPoint1: pathElement.controlPoint1, controlPoint2: pathElement.controlPoint2)
+            annotationPath.path?.append(currentPathElement)
+        }
+        
+        guard annotationShouldBeSaved else { return }
+        
+        do {
+            let jsonData = try JSONEncoder().encode(annotationPath)
+            self.setValue(String(data: jsonData, encoding: String.Encoding.utf8) as Any, forAnnotationKey: PDFAnnotationKey(rawValue: "/Contents"))
+        } catch {
+            print ("Could not encode annotation path into annotation metadata")
+        }
+    }
+    
+    /// Returns a copy of the annotation's original `UIBezierPath` which was stored in the annotation's metadata `/Contents` key. If no such path is stored, returns the regular one
+    func getAnnotationPath() -> UIBezierPath? {
+        if let contentsKeyValue = self.annotationKeyValues["/Contents"] {
+            do {
+                let contentKeyValueData : Data? = (contentsKeyValue as! String).data(using: .utf8)
+                if contentKeyValueData == nil {
+                    print ("Could not decode annotation path from metadata")
+                    return self.paths?.first
+                }
+                let annotationPathElements = try JSONDecoder().decode(swAnnotationPath.self, from: contentKeyValueData!)
+                if annotationPathElements.path == nil {
+                    print ("Could not decode annotation path from metadata")
+                    return self.paths?.first
+                }
+                let bezierPath = UIBezierPath()
+                var points : [(type: String?, point: CGPoint?, controlPoint: CGPoint?, controlPoint1: CGPoint?, controlPoint2: CGPoint?)] = []
+                for pathElement in annotationPathElements.path! {
+                    points.append((type: pathElement.type, point: pathElement.point, controlPoint: pathElement.controlPoint, controlPoint1: pathElement.controlPoint1, controlPoint2: pathElement.controlPoint2))
+                }
+                var success = true
+                for i in 0..<points.count {
+                    switch points[i].type {
+                    case "move":
+                        if points[i].point != nil {
+                            bezierPath.move(to: points[i].point!)
+                        } else {
+                            success = false
+                            break
+                        }
+                    case "addCurve":
+                        if let controlPoint1 = points[i].controlPoint1,
+                           let controlPoint2 = points[i].controlPoint2,
+                           let point = points[i].point {
+                            bezierPath.addCurve(to: point, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
+                        } else {
+                            success = false
+                            break
+                        }
+                    default:
+                        success = false
+                        break
+                    }
+                }
+                if !success {
+                    print ("Could not decode annotation path from metadata")
+                    return self.paths?.first
+                } else {
+                    return bezierPath
+                }
+            } catch {
+                print ("Could not decode annotation path from metadata")
+                return self.paths?.first
+            }
+        } else {
+            return self.paths?.first
         }
     }
 }
