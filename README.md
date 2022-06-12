@@ -30,7 +30,7 @@ After that you can add <code>import PDFFreedraw</code> to the relevant class in 
 
 ## Usage
 Please consult the [ViewController.swift](pdfView%20Freedraw/ViewController.swift) file, which documents all of the options and best practices.
-If you plan to use this framework with SwiftUI, you can consult mikekllr's comment [here.](https://github.com/ClassicalDude/pdfView-Freedraw/issues/5#issuecomment-804695681)
+If you plan to use this framework with SwiftUI, you can consult the comment [here.](https://github.com/ClassicalDude/pdfView-Freedraw/issues/5#issuecomment-1152994426)
 
 ## Known Issues
 As of iOS14 and iPadOS14, PDFKit does not load saved curved annotation paths properly: all <code>addCurve</code> segments of the path are replaced with <code>addLine</code>. Note that while you are creating annotations everything is working well; the problem manifests when you open a previously-saved file with curved annotations. <code>PDFFreedrawGestureRecognizer</code> has a workaround in place, which stores a json string of the original path in the annotation's <code>"/Content"</code> key of its metadata dictionary, to be recovered automatically by the class' <code>PDFAnnotation.getAnnotationPath() function</code>. See the example [ViewController.swift](pdfView%20Freedraw/ViewController.swift) file for details.
