@@ -30,7 +30,7 @@ After that you can add <code>import PDFFreedraw</code> to the relevant class in 
 
 ## Usage
 Please consult the [ViewController.swift](pdfView%20Freedraw/ViewController.swift) file, which documents all of the options and best practices.
-If you plan to use this framework with SwiftUI, you can consult mikekllr's comment [here.](https://github.com/ClassicalDude/pdfView-Freedraw/issues/5#issuecomment-804695681)
+If you plan to use this framework with SwiftUI, you can consult the comment [here.](https://github.com/ClassicalDude/pdfView-Freedraw/issues/5#issuecomment-1152994426)
 
 ## Credit
 The precise eraser for ink-type annotations is made possible by using the [ClippingBezier library](https://github.com/adamwulf/ClippingBezier) from Adam Wulf.
